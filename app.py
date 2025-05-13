@@ -15,24 +15,16 @@ df_grouped = (
     .reset_index(name='Count')
 )
 
-# Tính phần trăm trong mỗi nhóm Age + Job_Level
+# Chuẩn hóa phần trăm trong mỗi nhóm Age + Job_Level
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Đổi tên để xóa tiền tố "Current_Job_Level=" trong tiêu đề cột phụ
-df_grouped['Current_Job_Level'] = df_grouped['Current_Job_Level'].replace({
-    'Entry': 'Entry',
-    'Executive': 'Executive',
-    'Mid': 'Mid',
-    'Senior': 'Senior'
-})
-
-# Bộ lọc tương tác
+# Interactive filter
 job_levels = df_grouped['Current_Job_Level'].unique()
 selected_levels = st.multiselect("Select Job Levels", job_levels, default=list(job_levels))
 
 filtered_df = df_grouped[df_grouped['Current_Job_Level'].isin(selected_levels)]
 
-# Vẽ biểu đồ
+# Biểu đồ
 fig = px.bar(
     filtered_df,
     x='Age',

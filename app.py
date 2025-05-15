@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import plotly.express as px
 
@@ -23,7 +23,8 @@ job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_levels = st.sidebar.multiselect("Select Job Levels", job_levels, default=job_levels)
 
 ages = sorted(df_grouped['Age'].unique())
-selected_ages = st.sidebar.multiselect("Select Ages", ages, default=ages)
+ages_with_all = ['ALL'] + [str(age) for age in ages]  # Thêm "ALL" để chọn tất cả độ tuổi
+selected_ages = st.sidebar.multiselect("Select Ages", ages_with_all, default=['ALL'])
 
 statuses = ['Yes', 'No']
 selected_statuses = st.sidebar.multiselect("Entrepreneurship Status", statuses, default=statuses)
@@ -33,11 +34,18 @@ st.sidebar.title("📊 Display Options")
 mode = st.sidebar.radio("Show data as:", ["Percentage (%)", "Count"])
 
 # --- 5. Apply Filters ---
-filtered_df = df_grouped[
-    (df_grouped['Current_Job_Level'].isin(selected_levels)) &
-    (df_grouped['Age'].isin(selected_ages)) &
-    (df_grouped['Entrepreneurship'].isin(selected_statuses))
-]
+if 'ALL' in selected_ages:
+    filtered_df = df_grouped[
+        (df_grouped['Current_Job_Level'].isin(selected_levels)) &
+        (df_grouped['Entrepreneurship'].isin(selected_statuses))
+    ]
+else:
+    selected_ages_int = [int(age) for age in selected_ages]
+    filtered_df = df_grouped[
+        (df_grouped['Current_Job_Level'].isin(selected_levels)) &
+        (df_grouped['Age'].isin(selected_ages_int)) &
+        (df_grouped['Entrepreneurship'].isin(selected_statuses))
+    ]
 
 # --- 6. Define Axis Labels and Tooltip ---
 if mode == "Percentage (%)":
@@ -56,11 +64,14 @@ fig = px.bar(
     filtered_df,
     x='Age',
     y=y_col,
-    # Thay vì color theo Entrepreneurship, ta dùng màu theo giá trị y_col (Percentage hoặc Count)
-    color=y_col,
+    color='Entrepreneurship',
     barmode='stack',
     facet_col='Current_Job_Level',
-    color_continuous_scale='RdBu',
+    category_orders={
+        'Current_Job_Level': ['Entry', 'Executive', 'Mid', 'Senior'],
+        'Entrepreneurship': ['No', 'Yes']
+    },
+    color_discrete_map={'Yes': '#FFD700', 'No': '#004080'},  # Vàng sáng và xanh đậm
     text=text_values,
     height=600,
     width=1200,
@@ -68,11 +79,11 @@ fig = px.bar(
 
 fig.update_layout(
     title=dict(
-        text="📊 Entrepreneurship by Age and Job Level (Colored by Value)",
+        text="📊 Entrepreneurship by Age and Job Level",
         x=0.5,
         font=dict(size=20)
     ),
-    coloraxis_colorbar=dict(title=y_label),
+    legend_title_text='Entrepreneurship',
     bargap=0.15,
     uniformtext_minsize=8,
     uniformtext_mode='hide',
@@ -85,7 +96,7 @@ if y_format:
 
 fig.update_traces(textposition='inside')
 
-# ➤ Clean up facet titles
+# Clean up facet titles chỉ còn tên cấp độ
 fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
 
 # --- 8. Display in App ---

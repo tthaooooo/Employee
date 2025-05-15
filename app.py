@@ -2,44 +2,45 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- 1. Tải dữ liệu ---
+# --- 1. Load Data ---
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# --- 2. Tính toán ---
+# --- 2. Group and Calculate ---
 df_grouped = (
     df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship'])
     .size()
     .reset_index(name='Count')
 )
 
+# Calculate percentage within each (Job Level + Age) group
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# --- 3. Sidebar: Tùy chọn lọc ---
-st.sidebar.title("🔍 Bộ lọc dữ liệu")
+# --- 3. Sidebar Filters ---
+st.sidebar.title("🔍 Data Filters")
 
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
-selected_levels = st.sidebar.multiselect("Chọn cấp bậc công việc", job_levels, default=job_levels)
+selected_levels = st.sidebar.multiselect("Select Job Levels", job_levels, default=job_levels)
 
 ages = sorted(df_grouped['Age'].unique())
-selected_ages = st.sidebar.multiselect("Chọn độ tuổi", ages, default=ages)
+selected_ages = st.sidebar.multiselect("Select Ages", ages, default=ages)
 
 statuses = ['Yes', 'No']
-selected_statuses = st.sidebar.multiselect("Tình trạng khởi nghiệp", statuses, default=statuses)
+selected_statuses = st.sidebar.multiselect("Entrepreneurship Status", statuses, default=statuses)
 
-# --- 4. Chế độ biểu đồ ---
-st.sidebar.title("📊 Tùy chọn hiển thị")
-mode = st.sidebar.radio("Hiển thị theo", ["Phần trăm (%)", "Số lượng (Count)"])
+# --- 4. Display Mode Toggle ---
+st.sidebar.title("📊 Display Options")
+mode = st.sidebar.radio("Show data as:", ["Percentage (%)", "Count"])
 
-# --- 5. Lọc dữ liệu ---
+# --- 5. Apply Filters ---
 filtered_df = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Age'].isin(selected_ages)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses))
 ]
 
-# --- 6. Thiết lập trục y và nhãn ---
-if mode == "Phần trăm (%)":
+# --- 6. Define Axis Labels and Tooltip ---
+if mode == "Percentage (%)":
     y_col = "Percentage"
     y_label = "Percentage"
     text_values = filtered_df[y_col].apply(lambda x: f"{x:.0%}")
@@ -50,7 +51,7 @@ else:
     text_values = filtered_df[y_col].astype(str)
     y_format = None
 
-# --- 7. Tạo biểu đồ ---
+# --- 7. Create Plot ---
 fig = px.bar(
     filtered_df,
     x='Age',
@@ -67,11 +68,11 @@ fig = px.bar(
 
 fig.update_layout(
     title=dict(
-        text="📊 Tỷ lệ hoặc số lượng người khởi nghiệp theo độ tuổi và cấp bậc công việc",
+        text="📊 Entrepreneurship by Age and Job Level",
         x=0.5,
         font=dict(size=20)
     ),
-    legend_title_text='Khởi nghiệp',
+    legend_title_text='Entrepreneurship',
     bargap=0.15,
     uniformtext_minsize=8,
     uniformtext_mode='hide',
@@ -84,9 +85,9 @@ if y_format:
 
 fig.update_traces(textposition='inside')
 
-# ➤ Xóa tiền tố trong tiêu đề các biểu đồ con
+# ➤ Clean up facet titles by removing 'Current_Job_Level='
 fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
 
-# --- 8. Hiển thị ---
-st.title("🚀 Phân tích nghề nghiệp & khởi nghiệp")
+# --- 8. Show App ---
+st.title("🚀 Education & Career Success Dashboard")
 st.plotly_chart(fig, use_container_width=True)

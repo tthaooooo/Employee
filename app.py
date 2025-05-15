@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- (Phần load và xử lý dữ liệu giữ nguyên) ---
-
+# --- 1. Load Data ---
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
+# --- 2. Group and Calculate ---
 df_grouped = (
     df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship'])
     .size()
@@ -15,6 +15,7 @@ df_grouped = (
 
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
+# --- 3. Sidebar Filters ---
 st.sidebar.title("🔍 Data Filters")
 
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
@@ -30,6 +31,7 @@ selected_statuses = st.sidebar.multiselect("Entrepreneurship Status", statuses, 
 st.sidebar.title("📊 Display Options")
 mode = st.sidebar.radio("Show data as:", ["Percentage (%)", "Count"])
 
+# --- 4. Apply Filters ---
 if 'ALL' in selected_ages:
     filtered_df = df_grouped[
         (df_grouped['Current_Job_Level'].isin(selected_levels)) &
@@ -43,6 +45,7 @@ else:
         (df_grouped['Entrepreneurship'].isin(selected_statuses))
     ]
 
+# --- 5. Define Axis Labels and Tooltip ---
 if mode == "Percentage (%)":
     y_col = "Percentage"
     y_label = "Percentage"
@@ -60,10 +63,9 @@ job_levels_to_show = [lvl for lvl in job_levels_order if lvl in selected_levels]
 
 st.title("🚀 Education & Career Success Dashboard")
 
-# --- Tạo 2 cột ---
+# --- 6. Create 2 columns for layout ---
 cols = st.columns(2)
 
-# Chia 4 charts cho 2 cột, mỗi cột tối đa 2 chart
 for i, lvl in enumerate(job_levels_to_show):
     df_lvl = filtered_df[filtered_df['Current_Job_Level'] == lvl]
     if df_lvl.empty:
@@ -85,11 +87,12 @@ for i, lvl in enumerate(job_levels_to_show):
         width=600,
         title=f"{lvl} Level"
     )
-    fig.update_traces(textposition='inside', textangle=90)  # xoay text label phần trăm dọc theo thanh bar
 
+    fig.update_traces(textposition='inside')
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90  # Xoay trục X (tuổi) dọc cho dễ đọc
     )
 
     fig.update_yaxes(title=y_label)

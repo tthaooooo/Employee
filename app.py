@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- 1. Load Data ---
+# --- (Phần load và xử lý dữ liệu giữ nguyên) ---
+
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# --- 2. Group and Calculate ---
 df_grouped = (
     df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship'])
     .size()
@@ -15,7 +15,6 @@ df_grouped = (
 
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# --- 3. Sidebar Filters ---
 st.sidebar.title("🔍 Data Filters")
 
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
@@ -31,7 +30,6 @@ selected_statuses = st.sidebar.multiselect("Entrepreneurship Status", statuses, 
 st.sidebar.title("📊 Display Options")
 mode = st.sidebar.radio("Show data as:", ["Percentage (%)", "Count"])
 
-# --- 4. Apply Filters ---
 if 'ALL' in selected_ages:
     filtered_df = df_grouped[
         (df_grouped['Current_Job_Level'].isin(selected_levels)) &
@@ -45,7 +43,6 @@ else:
         (df_grouped['Entrepreneurship'].isin(selected_statuses))
     ]
 
-# --- 5. Define Axis Labels and Tooltip ---
 if mode == "Percentage (%)":
     y_col = "Percentage"
     y_label = "Percentage"
@@ -57,16 +54,21 @@ else:
     def fmt_text(x): return str(x)
     y_format = None
 
-# --- 6. Create separate charts per job level ---
+color_map = {'Yes': '#FFD700', 'No': '#004080'}
+job_levels_order = ['Entry', 'Executive', 'Mid', 'Senior']
+job_levels_to_show = [lvl for lvl in job_levels_order if lvl in selected_levels]
+
 st.title("🚀 Education & Career Success Dashboard")
 
-color_map = {'Yes': '#FFD700', 'No': '#004080'}
-job_levels_to_show = [lvl for lvl in ['Entry', 'Executive', 'Mid', 'Senior'] if lvl in selected_levels]
+# --- Tạo 2 cột ---
+cols = st.columns(2)
 
-for lvl in job_levels_to_show:
+# Chia 4 charts cho 2 cột, mỗi cột tối đa 2 chart
+for i, lvl in enumerate(job_levels_to_show):
     df_lvl = filtered_df[filtered_df['Current_Job_Level'] == lvl]
     if df_lvl.empty:
-        st.write(f"### {lvl} — No data to display.")
+        with cols[i % 2]:
+            st.write(f"### {lvl} — No data to display.")
         continue
 
     fig = px.bar(
@@ -79,11 +81,11 @@ for lvl in job_levels_to_show:
         color_discrete_map=color_map,
         text=df_lvl[y_col].apply(fmt_text),
         labels={'Age': 'Age', y_col: y_label},
-        height=400,
+        height=350,
         width=600,
         title=f"{lvl} Level"
     )
-    fig.update_traces(textposition='inside')
+    fig.update_traces(textposition='inside', textangle=90)  # xoay text label phần trăm dọc theo thanh bar
 
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
@@ -94,4 +96,5 @@ for lvl in job_levels_to_show:
     if y_format:
         fig.update_yaxes(tickformat=y_format)
 
-    st.plotly_chart(fig, use_container_width=False)
+    with cols[i % 2]:
+        st.plotly_chart(fig, use_container_width=True)

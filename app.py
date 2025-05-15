@@ -56,11 +56,11 @@ fig = px.bar(
     filtered_df,
     x='Age',
     y=y_col,
-    color='Entrepreneurship',
+    # Thay vì color theo Entrepreneurship, ta dùng màu theo giá trị y_col (Percentage hoặc Count)
+    color=y_col,
     barmode='stack',
     facet_col='Current_Job_Level',
-    category_orders={'Entrepreneurship': ['No', 'Yes']},
-    color_discrete_map={'No': '#F48FB1', 'Yes': '#00796B'},  # Màu hồng trung bình và xanh lam đậm
+    color_continuous_scale='RdBu',
     text=text_values,
     height=600,
     width=1200,
@@ -68,11 +68,11 @@ fig = px.bar(
 
 fig.update_layout(
     title=dict(
-        text="📊 Entrepreneurship by Age and Job Level",
+        text="📊 Entrepreneurship by Age and Job Level (Colored by Value)",
         x=0.5,
         font=dict(size=20)
     ),
-    legend_title_text='Entrepreneurship',
+    coloraxis_colorbar=dict(title=y_label),
     bargap=0.15,
     uniformtext_minsize=8,
     uniformtext_mode='hide',

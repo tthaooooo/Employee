@@ -60,7 +60,7 @@ fig = px.bar(
     barmode='stack',
     facet_col='Current_Job_Level',
     category_orders={'Entrepreneurship': ['No', 'Yes']},
-    color_discrete_map={'Yes': '#1f77b4', 'No': '#ff7f0e'},
+    color_discrete_map={'Yes': '#FFD700', 'No': '#004080'},  # Bright yellow and dark blue
     text=text_values,
     height=600,
     width=1200,
@@ -85,9 +85,9 @@ if y_format:
 
 fig.update_traces(textposition='inside')
 
-# ➤ Clean up facet titles by removing 'Current_Job_Level='
+# ➤ Clean up facet titles
 fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
 
-# --- 8. Show App ---
+# --- 8. Display in App ---
 st.title("🚀 Education & Career Success Dashboard")
 st.plotly_chart(fig, use_container_width=True)

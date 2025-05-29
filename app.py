@@ -93,7 +93,7 @@ for i, lvl in enumerate(levels_to_show):
                 text=fmt(val),
                 showarrow=False,
                 textangle=0,  # chữ thẳng
-                font=dict(color="white", size=9, family="Arial Black"),  # nhỏ và in đậm
+                font=dict(color="white", size=6, family="Arial Black"),  # cỡ chữ nhỏ và in đậm
                 xanchor="center",
                 yanchor="middle"
             )

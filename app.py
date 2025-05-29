@@ -2,34 +2,28 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Đọc dữ liệu
+# Đọc dữ liệu và lọc theo điều kiện
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Tính toán Count và Percentage
+# Nhóm dữ liệu và tính toán phần trăm
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Sidebar
+# Sidebar Filters
 st.sidebar.title("Filters")
-
-# Job Levels
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_levels = st.sidebar.multiselect("Job Levels", job_levels, default=job_levels)
 
-# Age slider
-min_age = int(df_grouped['Age'].min())
-max_age = int(df_grouped['Age'].max())
-age_range = st.sidebar.slider("Select Age Range", min_age, max_age, (min_age, max_age))
+min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
+age_range = st.sidebar.slider("Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Entrepreneurship status
 statuses = ['Yes', 'No']
 selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default=statuses)
 
-# Count or Percentage
 mode = st.sidebar.radio("Show as:", ["Percentage (%)", "Count"])
 
-# Lọc dữ liệu
+# Lọc dữ liệu theo điều kiện
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
@@ -37,7 +31,7 @@ filtered = df_grouped[
     (df_grouped['Age'] <= age_range[1])
 ]
 
-# Cài đặt biểu đồ
+# Xác định cột hiển thị và format
 if mode == "Percentage (%)":
     y_col = 'Percentage'
     fmt = lambda x: f"{x:.0%}"
@@ -49,17 +43,16 @@ else:
     y_axis_title = "Count"
     y_tick_format = None
 
-# Màu sắc và thứ tự
+# Cấu hình hiển thị
 colors = {'Yes': '#FFD700', 'No': '#004080'}
 order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
 levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
 
-# Title
 st.title("🚀 Education & Career Success Dashboard")
 
-# Hiển thị biểu đồ
 cols = st.columns(2)
 
+# Vẽ biểu đồ cho từng cấp bậc
 for i, lvl in enumerate(levels_to_show):
     data_lvl = filtered[filtered['Current_Job_Level'] == lvl]
     if data_lvl.empty:
@@ -74,19 +67,39 @@ for i, lvl in enumerate(levels_to_show):
         color='Entrepreneurship',
         barmode='stack',
         color_discrete_map=colors,
-        category_orders={
-            'Entrepreneurship': ['No', 'Yes'],
-            'Age': sorted(data_lvl['Age'].unique())
-        },
-        text=data_lvl[y_col].apply(fmt),
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': sorted(data_lvl['Age'].unique())},
         labels={'Age': 'Age', y_col: y_axis_title},
-        height=350,
+        height=400,
         width=600,
         title=f"{lvl} Level"
     )
 
-    # Text nằm bên ngoài cột, trình bày dọc
-    fig.update_traces(textposition='outside')
+    # Ẩn text mặc định
+    fig.update_traces(text='')
+
+    # Tính vị trí annotation đứng dọc đúng cho từng phần stack
+    ages_sorted = sorted(data_lvl['Age'].unique())
+    stack_order = ['No', 'Yes']
+    bottoms = {age: 0 for age in ages_sorted}
+
+    for status in stack_order:
+        df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
+        for _, row in df_status.iterrows():
+            age = row['Age']
+            val = row[y_col]
+            bottom = bottoms[age]
+            y_pos = bottom + val / 2  # vị trí annotation chính giữa phần stack
+            fig.add_annotation(
+                x=age,
+                y=y_pos,
+                text=fmt(val),
+                showarrow=False,
+                textangle=-90,
+                font=dict(color="white", size=12),
+                xanchor="center",
+                yanchor="middle"
+            )
+            bottoms[age] += val
 
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),

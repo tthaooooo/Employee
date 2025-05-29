@@ -87,33 +87,31 @@ for i, lvl in enumerate(levels_to_show):
 
     fig.update_traces(text='')  # xóa text mặc định
 
-    # Gắn label thủ công
-    bottoms = {age: 0 for age in unique_ages}
+    # Gắn label thủ công — TẤT CẢ SỐ "NO" CÙNG 1 HÀNG, "YES" CÙNG 1 HÀNG
     for status in ['No', 'Yes']:
         df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
+
+        if mode == "Percentage (%)":
+            y_pos_fixed = 0.15 if status == 'No' else 0.85
+        else:
+            max_val = data_lvl[y_col].max()
+            y_pos_fixed = max_val * (0.15 if status == 'No' else 0.85)
+
         for _, row in df_status.iterrows():
             age = row['Age']
             val = row[y_col]
-            bottom = bottoms[age]
             if val == 0:
                 continue
 
-            # ✅ Giữ số trong stack nhìn cân đối
-            if status == 'No':
-                y_pos = bottom + val * 0.5  # giữa phần xanh
-            else:
-                y_pos = bottom + val * 0.85  # gần đỉnh phần vàng
-
             fig.add_annotation(
                 x=age,
-                y=y_pos,
+                y=y_pos_fixed,
                 text=fmt(val),
                 showarrow=False,
                 font=dict(color="white", size=font_size),
                 xanchor="center",
                 yanchor="middle"
             )
-            bottoms[age] += val
 
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),

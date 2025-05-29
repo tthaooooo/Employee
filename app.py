@@ -92,8 +92,8 @@ for i, lvl in enumerate(levels_to_show):
                 y=y_pos,
                 text=fmt(val),
                 showarrow=False,
-                textangle=0,  # chữ thẳng
-                font=dict(color="white", size=6, family="Arial Black"),  # cỡ chữ nhỏ và in đậm
+                textangle=0,
+                font=dict(color="white", size=6, family="Arial Black"),
                 xanchor="center",
                 yanchor="middle"
             )
@@ -102,7 +102,8 @@ for i, lvl in enumerate(levels_to_show):
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
-        xaxis_tickangle=90
+        xaxis_tickangle=90,
+        bargap=0.1  # thanh bar rộng hơn
     )
 
     fig.update_yaxes(title=y_axis_title)

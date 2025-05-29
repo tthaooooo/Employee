@@ -37,13 +37,11 @@ if mode == "Percentage (%)":
     fmt = lambda x: f"{x:.0%}"
     y_axis_title = "Percentage"
     y_tick_format = ".0%"
-    label_offset = 0.01
 else:
     y_col = 'Count'
     fmt = lambda x: str(x)
     y_axis_title = "Count"
     y_tick_format = None
-    label_offset = 1
 
 # Cấu hình hiển thị
 colors = {'Yes': '#FFD700', 'No': '#004080'}
@@ -100,7 +98,7 @@ for i, lvl in enumerate(levels_to_show):
 
     fig.update_traces(text='')
 
-    # Gắn label ngay trên từng phần stack
+    # Gắn label nằm trong phần stack tương ứng
     bottoms = {age: 0 for age in unique_ages}
     stack_order = ['No', 'Yes']  # đảm bảo đúng thứ tự stacking
 
@@ -110,18 +108,19 @@ for i, lvl in enumerate(levels_to_show):
             age = row['Age']
             val = row[y_col]
             bottom = bottoms[age]
-            y_pos = bottom + val
             if val == 0:
                 continue
+            # Đặt text nằm trong phần stack màu tương ứng, gần đỉnh
+            y_pos = bottom + val * 0.85
             fig.add_annotation(
                 x=age,
-                y=y_pos + label_offset,
+                y=y_pos,
                 text=fmt(val),
                 showarrow=False,
                 textangle=0,
-                font=dict(color="black", size=font_size),
+                font=dict(color="white", size=font_size),
                 xanchor="center",
-                yanchor="bottom"
+                yanchor="middle"
             )
             bottoms[age] += val
 

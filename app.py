@@ -59,6 +59,15 @@ for i, lvl in enumerate(levels_to_show):
             st.write(f"### {lvl} — No data")
         continue
 
+    # Tính số lượng cột (số tuổi hiển thị) để điều chỉnh font size
+    num_bars = len(data_lvl['Age'].unique())
+    if num_bars <= 5:
+        font_size = 14
+    elif num_bars <= 10:
+        font_size = 10
+    else:
+        font_size = 6
+
     fig = px.bar(
         data_lvl,
         x='Age',
@@ -69,14 +78,13 @@ for i, lvl in enumerate(levels_to_show):
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': sorted(data_lvl['Age'].unique())},
         labels={'Age': 'Age', y_col: y_axis_title},
         height=400,
-        width=900,  # tăng chiều ngang
+        width=900,
         title=f"{lvl} Level"
     )
 
     # Ẩn text mặc định
     fig.update_traces(text='')
 
-    # Tính vị trí annotation đúng cho từng phần stack
     bottoms = {age: 0 for age in sorted(data_lvl['Age'].unique())}
     stack_order = ['No', 'Yes']
 
@@ -93,7 +101,7 @@ for i, lvl in enumerate(levels_to_show):
                 text=fmt(val),
                 showarrow=False,
                 textangle=0,
-                font=dict(color="white", size=6),  # bỏ bold
+                font=dict(color="white", size=font_size),
                 xanchor="center",
                 yanchor="middle"
             )

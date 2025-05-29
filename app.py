@@ -94,8 +94,8 @@ for i, lvl in enumerate(levels_to_show):
                 y=y_pos,
                 text=fmt(val),
                 showarrow=False,
-                textangle=-90,
-                font=dict(color="white", size=12),
+                textangle=-90,   # Xoay chữ đứng dọc -90 độ
+                font=dict(color="white", size=14, family="Arial Black"),
                 xanchor="center",
                 yanchor="middle"
             )

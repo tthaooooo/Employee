@@ -2,20 +2,21 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Đọc và xử lý dữ liệu
+# Đọc dữ liệu
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
+# Nhóm dữ liệu
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Sidebar: Filters
+# Sidebar Filters
 st.sidebar.title("Filters")
 
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_levels = st.sidebar.multiselect("Job Levels", job_levels, default=job_levels)
 
-# Slider chọn khoảng tuổi
+# Thay thế multi-select bằng slider chọn khoảng tuổi
 min_age = int(df_grouped['Age'].min())
 max_age = int(df_grouped['Age'].max())
 selected_age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
@@ -25,7 +26,7 @@ selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default
 
 mode = st.sidebar.radio("Show as:", ["Percentage (%)", "Count"])
 
-# Lọc dữ liệu theo filter
+# Lọc dữ liệu theo slider tuổi
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
@@ -33,7 +34,7 @@ filtered = df_grouped[
     (df_grouped['Age'] <= selected_age_range[1])
 ]
 
-# Thiết lập hiển thị
+# Thiết lập mode
 if mode == "Percentage (%)":
     y_col = 'Percentage'
     fmt = lambda x: f"{x:.0%}"
@@ -49,10 +50,8 @@ colors = {'Yes': '#FFD700', 'No': '#004080'}
 order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
 levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
 
-# Title
 st.title("🚀 Education & Career Success Dashboard")
 
-# Hiển thị biểu đồ
 cols = st.columns(2)
 
 for i, lvl in enumerate(levels_to_show):
@@ -69,7 +68,10 @@ for i, lvl in enumerate(levels_to_show):
         color='Entrepreneurship',
         barmode='stack',
         color_discrete_map=colors,
-        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': sorted(data_lvl['Age'].unique())},
+        category_orders={
+            'Entrepreneurship': ['No', 'Yes'],
+            'Age': sorted(data_lvl['Age'].unique())
+        },
         text=data_lvl[y_col].apply(fmt),
         labels={'Age': 'Age', y_col: y_axis_title},
         height=350,
@@ -77,7 +79,12 @@ for i, lvl in enumerate(levels_to_show):
         title=f"{lvl} Level"
     )
 
-    fig.update_traces(textposition='inside')
+    # Text hiển thị trên cột, xoay dọc
+    fig.update_traces(
+        textposition='outside',
+        textangle=-90
+    )
+
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',

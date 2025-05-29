@@ -52,7 +52,6 @@ st.title("🚀 Education & Career Success Dashboard")
 
 cols = st.columns(2)
 
-# Vẽ biểu đồ cho từng cấp bậc
 for i, lvl in enumerate(levels_to_show):
     data_lvl = filtered[filtered['Current_Job_Level'] == lvl]
     if data_lvl.empty:
@@ -77,10 +76,9 @@ for i, lvl in enumerate(levels_to_show):
     # Ẩn text mặc định
     fig.update_traces(text='')
 
-    # Tính vị trí annotation đứng dọc đúng cho từng phần stack
-    ages_sorted = sorted(data_lvl['Age'].unique())
+    # Tính vị trí annotation đúng cho từng phần stack
+    bottoms = {age: 0 for age in sorted(data_lvl['Age'].unique())}
     stack_order = ['No', 'Yes']
-    bottoms = {age: 0 for age in ages_sorted}
 
     for status in stack_order:
         df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
@@ -88,14 +86,14 @@ for i, lvl in enumerate(levels_to_show):
             age = row['Age']
             val = row[y_col]
             bottom = bottoms[age]
-            y_pos = bottom + val / 2  # vị trí annotation chính giữa phần stack
+            y_pos = bottom + val / 2
             fig.add_annotation(
                 x=age,
                 y=y_pos,
                 text=fmt(val),
                 showarrow=False,
-                textangle=-90,   # Xoay chữ đứng dọc -90 độ
-                font=dict(color="white", size=14, family="Arial Black"),
+                textangle=270,  # xoay chữ dọc -90 độ theo kiểu khác
+                font=dict(color="white", size=12),
                 xanchor="center",
                 yanchor="middle"
             )

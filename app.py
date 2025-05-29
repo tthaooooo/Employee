@@ -76,7 +76,7 @@ for i, lvl in enumerate(levels_to_show):
     else:
         font_size = 6
 
-    # Width biểu đồ tự điều chỉnh theo số cột
+    # Width biểu đồ tự động điều chỉnh
     bar_width_per_age = 70
     base_margin = 150
     max_width = 1200
@@ -100,16 +100,22 @@ for i, lvl in enumerate(levels_to_show):
 
     fig.update_traces(text='')
 
-    # Hiển thị phần trăm hoặc count tại đỉnh mỗi cột, căn thẳng hàng
-    for age in unique_ages:
-        for idx, status in enumerate(['No', 'Yes']):
-            row = data_lvl[(data_lvl['Age'] == age) & (data_lvl['Entrepreneurship'] == status)]
-            if row.empty:
+    # Gắn label ngay trên từng phần stack
+    bottoms = {age: 0 for age in unique_ages}
+    stack_order = ['No', 'Yes']  # đảm bảo đúng thứ tự stacking
+
+    for status in stack_order:
+        df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
+        for _, row in df_status.iterrows():
+            age = row['Age']
+            val = row[y_col]
+            bottom = bottoms[age]
+            y_pos = bottom + val
+            if val == 0:
                 continue
-            val = row.iloc[0][y_col]
             fig.add_annotation(
-                x=age + (-0.2 if status == 'No' else 0.2),  # lệch ngang chút để không đè lên nhau
-                y=data_lvl[data_lvl['Age'] == age][y_col].sum() + label_offset,
+                x=age,
+                y=y_pos + label_offset,
                 text=fmt(val),
                 showarrow=False,
                 textangle=0,
@@ -117,6 +123,7 @@ for i, lvl in enumerate(levels_to_show):
                 xanchor="center",
                 yanchor="bottom"
             )
+            bottoms[age] += val
 
     # Cập nhật layout
     fig.update_layout(

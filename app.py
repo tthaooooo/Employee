@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Đọc dữ liệu
+# Đọc dữ liệu CSV
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
@@ -10,7 +10,7 @@ df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Sidebar filter
+# Sidebar filters
 st.sidebar.title("Filters")
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_levels = st.sidebar.multiselect("Job Levels", job_levels, default=job_levels)
@@ -23,7 +23,7 @@ selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default
 
 mode = st.sidebar.radio("Show as:", ["Percentage (%)", "Count"])
 
-# Lọc dữ liệu
+# Lọc dữ liệu theo filter
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
@@ -31,30 +31,28 @@ filtered = df_grouped[
     (df_grouped['Age'] <= age_range[1])
 ]
 
-# Color map
+# Hàm xác định cỡ chữ theo số cột
+def determine_font_size(num_bars):
+    if num_bars <= 1: return 20
+    elif num_bars == 2: return 18
+    elif num_bars == 3: return 16
+    elif num_bars == 4: return 14
+    elif num_bars == 5: return 12
+    elif num_bars == 6: return 11
+    elif num_bars == 7: return 10
+    elif num_bars == 8: return 9
+    elif num_bars == 9: return 8
+    elif num_bars == 10: return 7
+    else:  # num_bars == 11
+        return 6
+
+# Cấu hình hiển thị
 colors = {'Yes': '#FFD700', 'No': '#004080'}
 order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
 levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
 
 st.title("🚀 Education & Career Success Dashboard")
 cols = st.columns(2)
-
-def determine_font_size(num_bars):
-    """Trả về kích cỡ chữ tùy theo số cột (num_bars)."""
-    if num_bars <= 5: return 18
-    elif num_bars <= 6: return 17
-    elif num_bars <= 7: return 16
-    elif num_bars <= 8: return 15
-    elif num_bars <= 9: return 14
-    elif num_bars <= 10: return 13
-    elif num_bars <= 11: return 12
-    elif num_bars <= 12: return 11
-    elif num_bars <= 13: return 10
-    elif num_bars <= 14: return 9
-    elif num_bars <= 16: return 8
-    elif num_bars <= 18: return 7
-    elif num_bars <= 21: return 6
-    else: return 5
 
 for i, lvl in enumerate(levels_to_show):
     data_lvl = filtered[filtered['Current_Job_Level'] == lvl]
@@ -66,14 +64,17 @@ for i, lvl in enumerate(levels_to_show):
     unique_ages = sorted(data_lvl['Age'].unique())
     num_bars = len(unique_ages)
 
-    chart_width = max(400, min(1200, 50 * num_bars + 100))
+    # Cỡ chữ và width theo số cột
     font_size = determine_font_size(num_bars)
+    chart_width = max(400, min(1200, 50 * num_bars + 100))
 
+    # Chế độ hiển thị
     y_col = 'Percentage' if mode == "Percentage (%)" else 'Count'
     fmt = (lambda x: f"{x:.0%}") if mode == "Percentage (%)" else (lambda x: str(int(x)))
     y_axis_title = "Percentage" if mode == "Percentage (%)" else "Count"
     y_tick_format = ".0%" if mode == "Percentage (%)" else None
 
+    # Tạo biểu đồ
     fig = px.bar(
         data_lvl,
         x='Age',
@@ -88,17 +89,18 @@ for i, lvl in enumerate(levels_to_show):
         title=f"{lvl} Level"
     )
 
-    # Gắn nhãn số vào từng thanh
-    fig.update_traces(text='')  # xóa mặc định
+    # Xóa label mặc định
+    fig.update_traces(text='')
 
+    # Gắn text tùy theo stack
     bottoms = {age: 0 for age in unique_ages}
     for status in ['No', 'Yes']:
         df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
         for _, row in df_status.iterrows():
             age = row['Age']
             val = row[y_col]
-            if val == 0: continue
-
+            if val == 0:
+                continue
             y_pos = val * 0.5 if status == 'No' else bottoms[age] + val * 0.85
             fig.add_annotation(
                 x=age,
@@ -111,6 +113,7 @@ for i, lvl in enumerate(levels_to_show):
             )
             bottoms[age] += val
 
+    # Cập nhật layout
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',

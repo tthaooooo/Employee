@@ -77,7 +77,7 @@ for i, lvl in enumerate(levels_to_show):
         title=f"{lvl} Level"
     )
 
-    fig.update_traces(textposition='inside')
+    fig.update_traces(textposition='outside')  # Chỉnh vị trí số liệu ra ngoài cột
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',

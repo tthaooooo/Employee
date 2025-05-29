@@ -92,7 +92,7 @@ for i, lvl in enumerate(levels_to_show):
                 y=y_pos,
                 text=fmt(val),
                 showarrow=False,
-                textangle=270,  # xoay chữ dọc -90 độ theo kiểu khác
+                textangle=0,  # Đổi xoay chữ thẳng đứng
                 font=dict(color="white", size=12),
                 xanchor="center",
                 yanchor="middle"

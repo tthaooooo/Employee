@@ -2,60 +2,54 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Load dataset
+# Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Group and calculate
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
 # Sidebar filters
 st.sidebar.title("Filters")
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
-selected_levels = st.sidebar.multiselect("Job Levels", job_levels, default=job_levels)
+selected_levels = st.sidebar.multiselect("Select Job Levels", job_levels, default=job_levels)
 
 min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
-age_range = st.sidebar.slider("Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
+age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-statuses = ['Yes', 'No']
-selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default=statuses)
+selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Filter dataset
+# Filter data
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
-    (df_grouped['Age'] >= age_range[0]) &
-    (df_grouped['Age'] <= age_range[1])
+    (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
-# Font size helper
-def get_font_size(num_bars):
-    size_map = {
-        1: 20, 2: 18, 3: 16, 4: 14, 5: 12,
-        6: 11, 7: 10, 8: 9, 9: 8, 10: 7, 11: 6
-    }
-    return size_map.get(num_bars, 6)
+# Font size adjustment based on bar count
+def get_font_size(n):
+    return {1: 20, 2: 18, 3: 16, 4: 14, 5: 12, 6: 11, 7: 10, 8: 9, 9: 8, 10: 7}.get(n, 6)
 
-# Display setup
+# Chart colors
 color_map = {'Yes': '#FFD700', 'No': '#004080'}
 level_order = ['Entry', 'Executive', 'Mid', 'Senior']
 visible_levels = [lvl for lvl in level_order if lvl in selected_levels]
 
+# Page title
 st.title("🚀 Education & Career Success Dashboard")
 
+# Display each level's charts
 for level in visible_levels:
     data = filtered[filtered['Current_Job_Level'] == level]
     if data.empty:
-        st.write(f"### {level} — No data available")
+        st.write(f"### {level} – No data available")
         continue
 
     ages = sorted(data['Age'].unique())
-    num_bars = len(ages)
-    font_size = get_font_size(num_bars)
-    chart_width = max(400, min(1200, 50 * num_bars + 100))
+    font_size = get_font_size(len(ages))
+    chart_width = max(400, min(1200, 50 * len(ages) + 100))
 
-    # === Bar Chart (%)
+    # Stacked Bar Chart (Percentage)
     fig_bar = px.bar(
         data,
         x='Age',
@@ -67,24 +61,22 @@ for level in visible_levels:
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
         width=chart_width,
-        title=f"{level} Level – Percentage (%)"
+        title=f"{level} Level – Entrepreneurship by Age (%)"
     )
 
     for status in ['No', 'Yes']:
-        subset = data[data['Entrepreneurship'] == status]
-        for _, row in subset.iterrows():
-            if row['Percentage'] == 0:
-                continue
-            y_pos = 0.20 if status == 'No' else 0.90
-            fig_bar.add_annotation(
-                x=row['Age'],
-                y=y_pos,
-                text=f"{row['Percentage']:.0%}",
-                showarrow=False,
-                font=dict(color="white", size=font_size),
-                xanchor="center",
-                yanchor="middle"
-            )
+        for _, row in data[data['Entrepreneurship'] == status].iterrows():
+            if row['Percentage'] > 0:
+                y_pos = 0.20 if status == 'No' else 0.90
+                fig_bar.add_annotation(
+                    x=row['Age'],
+                    y=y_pos,
+                    text=f"{row['Percentage']:.0%}",
+                    showarrow=False,
+                    font=dict(color="white", size=font_size),
+                    xanchor="center",
+                    yanchor="middle"
+                )
 
     fig_bar.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
@@ -94,7 +86,7 @@ for level in visible_levels:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # === Area Line Chart (Count)
+    # Area Chart with Markers (Count)
     fig_area = px.area(
         data,
         x='Age',
@@ -106,7 +98,7 @@ for level in visible_levels:
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,
         width=chart_width,
-        title=f"{level} Level – Count (Area Chart)"
+        title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
 
     fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
@@ -117,7 +109,7 @@ for level in visible_levels:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Display 2 charts side-by-side
+    # Show charts side by side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)

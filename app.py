@@ -62,24 +62,16 @@ for i, lvl in enumerate(levels_to_show):
     unique_ages = sorted(data_lvl['Age'].unique())
     num_bars = len(unique_ages)
 
-    # Font size theo số lượng cột
-    if num_bars <= 3:
-        font_size = 18
-    elif num_bars <= 6:
-        font_size = 14
-    elif num_bars <= 9:
-        font_size = 10
-    elif num_bars <= 15:
-        font_size = 8
-    else:
-        font_size = 6
-
     # Width biểu đồ tự động điều chỉnh
     bar_width_per_age = 70
     base_margin = 150
     max_width = 1200
     min_width = 400
     calculated_width = min(max(bar_width_per_age * num_bars + base_margin, min_width), max_width)
+
+    # Font size tự động dựa theo độ rộng cột
+    bar_width = calculated_width / max(num_bars, 1)
+    font_size = max(min(bar_width * 0.4, 14), 4)  # Giới hạn từ 4 đến 14
 
     # Tạo biểu đồ
     fig = px.bar(
@@ -110,23 +102,24 @@ for i, lvl in enumerate(levels_to_show):
             bottom = bottoms[age]
             if val == 0:
                 continue
-            # Nếu là phần stack đầu (No), đặt label ở giữa cột (val * 0.5)
-            # Nếu là phần stack trên (Yes), đặt gần đỉnh (bottom + val * 0.85)
+            # Vị trí label
             if status == 'No':
                 y_pos = val * 0.5
             else:
                 y_pos = bottom + val * 0.85
 
-            fig.add_annotation(
-                x=age,
-                y=y_pos,
-                text=fmt(val),
-                showarrow=False,
-                textangle=0,
-                font=dict(color="white", size=font_size),
-                xanchor="center",
-                yanchor="middle"
-            )
+            # Nếu font_size đủ lớn thì mới hiển thị label
+            if font_size >= 5:
+                fig.add_annotation(
+                    x=age,
+                    y=y_pos,
+                    text=fmt(val),
+                    showarrow=False,
+                    textangle=0,
+                    font=dict(color="white", size=font_size),
+                    xanchor="center",
+                    yanchor="middle"
+                )
             bottoms[age] += val
 
     # Cập nhật layout

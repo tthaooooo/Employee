@@ -77,18 +77,29 @@ for i, lvl in enumerate(levels_to_show):
     # Ẩn text mặc định
     fig.update_traces(text='')
 
-    # Thêm text đứng dọc bằng annotation
-    for _, row in data_lvl.iterrows():
-        fig.add_annotation(
-            x=row['Age'],
-            y=row[y_col] / 2,  # Hiển thị ở giữa cột
-            text=fmt(row[y_col]),
-            showarrow=False,
-            textangle=-90,  # Xoay chữ đứng dọc
-            font=dict(color="white", size=12),
-            xanchor="center",
-            yanchor="middle"
-        )
+    # Tính vị trí annotation đứng dọc đúng cho từng phần stack
+    ages_sorted = sorted(data_lvl['Age'].unique())
+    stack_order = ['No', 'Yes']
+    bottoms = {age: 0 for age in ages_sorted}
+
+    for status in stack_order:
+        df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
+        for _, row in df_status.iterrows():
+            age = row['Age']
+            val = row[y_col]
+            bottom = bottoms[age]
+            y_pos = bottom + val / 2  # vị trí annotation chính giữa phần stack
+            fig.add_annotation(
+                x=age,
+                y=y_pos,
+                text=fmt(val),
+                showarrow=False,
+                textangle=-90,
+                font=dict(color="white", size=12),
+                xanchor="center",
+                yanchor="middle"
+            )
+            bottoms[age] += val
 
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),

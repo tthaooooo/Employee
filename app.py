@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Đọc dữ liệu
+# Load and filter data
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Gom nhóm và tính phần trăm
+# Group and calculate percentages
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
@@ -21,9 +21,9 @@ age_range = st.sidebar.slider("Age Range", min_value=min_age, max_value=max_age,
 statuses = ['Yes', 'No']
 selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default=statuses)
 
-mode = st.sidebar.radio("Show as:", ["Percentage (%)", "Count"])
+mode = st.sidebar.radio("Display Mode:", ["Percentage (%)", "Count"])
 
-# Lọc dữ liệu
+# Filter data
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
@@ -31,82 +31,73 @@ filtered = df_grouped[
     (df_grouped['Age'] <= age_range[1])
 ]
 
-# Hàm xác định cỡ chữ theo số cột
-def determine_font_size(num_bars):
-    if num_bars <= 1: return 20
-    elif num_bars == 2: return 18
-    elif num_bars == 3: return 16
-    elif num_bars == 4: return 14
-    elif num_bars == 5: return 12
-    elif num_bars == 6: return 11
-    elif num_bars == 7: return 10
-    elif num_bars == 8: return 9
-    elif num_bars == 9: return 8
-    elif num_bars == 10: return 7
-    else: return 6  # max 11 cột
+# Determine dynamic font size based on number of bars
+def get_font_size(num_bars):
+    size_map = {
+        1: 20, 2: 18, 3: 16, 4: 14, 5: 12,
+        6: 11, 7: 10, 8: 9, 9: 8, 10: 7, 11: 6
+    }
+    return size_map.get(num_bars, 6)
 
-# Cấu hình
-colors = {'Yes': '#FFD700', 'No': '#004080'}
-order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
-levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
+# Display setup
+color_map = {'Yes': '#FFD700', 'No': '#004080'}
+level_order = ['Entry', 'Executive', 'Mid', 'Senior']
+visible_levels = [lvl for lvl in level_order if lvl in selected_levels]
 
 st.title("🚀 Education & Career Success Dashboard")
 cols = st.columns(2)
 
-for i, lvl in enumerate(levels_to_show):
-    data_lvl = filtered[filtered['Current_Job_Level'] == lvl]
-    if data_lvl.empty:
+for i, level in enumerate(visible_levels):
+    data = filtered[filtered['Current_Job_Level'] == level]
+    if data.empty:
         with cols[i % 2]:
-            st.write(f"### {lvl} — No data")
+            st.write(f"### {level} — No data available")
         continue
 
-    unique_ages = sorted(data_lvl['Age'].unique())
-    num_bars = len(unique_ages)
+    ages = sorted(data['Age'].unique())
+    num_bars = len(ages)
+    font_size = get_font_size(num_bars)
 
-    font_size = determine_font_size(num_bars)
     chart_width = max(400, min(1200, 50 * num_bars + 100))
 
     y_col = 'Percentage' if mode == "Percentage (%)" else 'Count'
-    fmt = (lambda x: f"{x:.0%}") if mode == "Percentage (%)" else (lambda x: str(int(x)))
-    y_axis_title = "Percentage" if mode == "Percentage (%)" else "Count"
-    y_tick_format = ".0%" if mode == "Percentage (%)" else None
+    value_format = (lambda x: f"{x:.0%}") if mode == "Percentage (%)" else (lambda x: str(int(x)))
+    y_title = "Percentage" if mode == "Percentage (%)" else "Count"
+    tick_format = ".0%" if mode == "Percentage (%)" else None
 
     fig = px.bar(
-        data_lvl,
+        data,
         x='Age',
         y=y_col,
         color='Entrepreneurship',
         barmode='stack',
-        color_discrete_map=colors,
-        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': unique_ages},
-        labels={'Age': 'Age', y_col: y_axis_title},
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', y_col: y_title},
         height=400,
         width=chart_width,
-        title=f"{lvl} Level"
+        title=f"{level} Level"
     )
 
-    fig.update_traces(text='')  # xóa text mặc định
+    fig.update_traces(text='')
 
-    # Gắn label thủ công — TẤT CẢ SỐ "NO" CÙNG 1 HÀNG, "YES" CÙNG 1 HÀNG
+    # Align labels horizontally for each color
     for status in ['No', 'Yes']:
-        df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
+        subset = data[data['Entrepreneurship'] == status]
 
         if mode == "Percentage (%)":
-            y_pos_fixed = 0.15 if status == 'No' else 0.85
+            y_pos = 0.15 if status == 'No' else 0.85
         else:
-            max_val = data_lvl[y_col].max()
-            y_pos_fixed = max_val * (0.15 if status == 'No' else 0.85)
+            max_val = data[y_col].max()
+            y_pos = max_val * (0.15 if status == 'No' else 0.85)
 
-        for _, row in df_status.iterrows():
-            age = row['Age']
-            val = row[y_col]
-            if val == 0:
+        for _, row in subset.iterrows():
+            if row[y_col] == 0:
                 continue
-
             fig.add_annotation(
-                x=age,
-                y=y_pos_fixed,
-                text=fmt(val),
+                x=row['Age'],
+                y=y_pos,
+                text=value_format(row[y_col]),
                 showarrow=False,
                 font=dict(color="white", size=font_size),
                 xanchor="center",
@@ -119,9 +110,9 @@ for i, lvl in enumerate(levels_to_show):
         xaxis_tickangle=90,
         bargap=0.1
     )
-    fig.update_yaxes(title=y_axis_title)
-    if y_tick_format:
-        fig.update_yaxes(tickformat=y_tick_format)
+    fig.update_yaxes(title=y_title)
+    if tick_format:
+        fig.update_yaxes(tickformat=tick_format)
 
     with cols[i % 2]:
         st.plotly_chart(fig, use_container_width=True)

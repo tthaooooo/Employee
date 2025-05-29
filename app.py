@@ -6,11 +6,11 @@ import plotly.express as px
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Nhóm & tính phần trăm
+# Gom nhóm và tính phần trăm
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Sidebar
+# Sidebar filter
 st.sidebar.title("Filters")
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_levels = st.sidebar.multiselect("Job Levels", job_levels, default=job_levels)
@@ -31,13 +31,30 @@ filtered = df_grouped[
     (df_grouped['Age'] <= age_range[1])
 ]
 
-# Cấu hình
+# Color map
 colors = {'Yes': '#FFD700', 'No': '#004080'}
 order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
 levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
 
 st.title("🚀 Education & Career Success Dashboard")
 cols = st.columns(2)
+
+def determine_font_size(num_bars):
+    """Trả về kích cỡ chữ tùy theo số cột (num_bars)."""
+    if num_bars <= 5: return 18
+    elif num_bars <= 6: return 17
+    elif num_bars <= 7: return 16
+    elif num_bars <= 8: return 15
+    elif num_bars <= 9: return 14
+    elif num_bars <= 10: return 13
+    elif num_bars <= 11: return 12
+    elif num_bars <= 12: return 11
+    elif num_bars <= 13: return 10
+    elif num_bars <= 14: return 9
+    elif num_bars <= 16: return 8
+    elif num_bars <= 18: return 7
+    elif num_bars <= 21: return 6
+    else: return 5
 
 for i, lvl in enumerate(levels_to_show):
     data_lvl = filtered[filtered['Current_Job_Level'] == lvl]
@@ -49,17 +66,9 @@ for i, lvl in enumerate(levels_to_show):
     unique_ages = sorted(data_lvl['Age'].unique())
     num_bars = len(unique_ages)
 
-    # Tính toán kích thước
-    max_width = 1200
-    min_width = 400
-    bar_width_per_age = 60
-    base_margin = 150
-    chart_width = min(max(bar_width_per_age * num_bars + base_margin, min_width), max_width)
+    chart_width = max(400, min(1200, 50 * num_bars + 100))
+    font_size = determine_font_size(num_bars)
 
-    # Tính font chữ dựa trên số cột
-    font_size = max(6, min(18, int(chart_width / (num_bars * 3.5))))
-
-    # Biểu đồ
     y_col = 'Percentage' if mode == "Percentage (%)" else 'Count'
     fmt = (lambda x: f"{x:.0%}") if mode == "Percentage (%)" else (lambda x: str(int(x)))
     y_axis_title = "Percentage" if mode == "Percentage (%)" else "Count"
@@ -79,21 +88,18 @@ for i, lvl in enumerate(levels_to_show):
         title=f"{lvl} Level"
     )
 
-    # Gắn nhãn
-    fig.update_traces(text='')  # Clear default labels
-    bottoms = {age: 0 for age in unique_ages}
-    stack_order = ['No', 'Yes']
+    # Gắn nhãn số vào từng thanh
+    fig.update_traces(text='')  # xóa mặc định
 
-    for status in stack_order:
+    bottoms = {age: 0 for age in unique_ages}
+    for status in ['No', 'Yes']:
         df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
         for _, row in df_status.iterrows():
             age = row['Age']
             val = row[y_col]
-            bottom = bottoms[age]
-            if val == 0:
-                continue
+            if val == 0: continue
 
-            y_pos = val * 0.5 if status == 'No' else bottom + val * 0.85
+            y_pos = val * 0.5 if status == 'No' else bottoms[age] + val * 0.85
             fig.add_annotation(
                 x=age,
                 y=y_pos,

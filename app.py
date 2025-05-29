@@ -31,7 +31,7 @@ filtered = df_grouped[
     (df_grouped['Age'] <= age_range[1])
 ]
 
-# Determine dynamic font size based on number of bars
+# Dynamic font size based on number of bars
 def get_font_size(num_bars):
     size_map = {
         1: 20, 2: 18, 3: 16, 4: 14, 5: 12,
@@ -81,15 +81,15 @@ for i, level in enumerate(visible_levels):
 
     fig.update_traces(text='')
 
-    # Align labels horizontally for each color
+    # Align labels for each status higher inside the stack
     for status in ['No', 'Yes']:
         subset = data[data['Entrepreneurship'] == status]
 
         if mode == "Percentage (%)":
-    y_pos = 0.20 if status == 'No' else 0.90  # tăng nhẹ vị trí
-else:
-    max_val = data[y_col].max()
-    y_pos = max_val * (0.20 if status == 'No' else 0.90)
+            y_pos = 0.20 if status == 'No' else 0.90  # raised labels a bit higher
+        else:
+            max_val = data[y_col].max()
+            y_pos = max_val * (0.20 if status == 'No' else 0.90)
 
         for _, row in subset.iterrows():
             if row[y_col] == 0:

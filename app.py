@@ -92,11 +92,11 @@ for i, lvl in enumerate(levels_to_show):
                 y=y_pos,
                 text=fmt(val),
                 showarrow=False,
-                textangle=0,  # Đổi xoay chữ thẳng đứng
-                font=dict(color="white", size=9),
+                textangle=0,  
+                font=dict(color="white", size=6),
                 xanchor="center",
                 yanchor="middle"
-            )
+            ) .update(font=dict(weight="bold"))
             bottoms[age] += val
 
     fig.update_layout(

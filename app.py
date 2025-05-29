@@ -43,22 +43,19 @@ level_order = ['Entry', 'Executive', 'Mid', 'Senior']
 visible_levels = [lvl for lvl in level_order if lvl in selected_levels]
 
 st.title("🚀 Education & Career Success Dashboard")
-cols = st.columns(2)
 
-for i, level in enumerate(visible_levels):
+for level in visible_levels:
     data = filtered[filtered['Current_Job_Level'] == level]
     if data.empty:
-        with cols[i % 2]:
-            st.write(f"### {level} — No data available")
+        st.write(f"### {level} — No data available")
         continue
 
     ages = sorted(data['Age'].unique())
     num_bars = len(ages)
     font_size = get_font_size(num_bars)
-
     chart_width = max(400, min(1200, 50 * num_bars + 100))
 
-    # === Plot 1: Stacked Bar Chart (%)
+    # === Bar Chart (%)
     fig_bar = px.bar(
         data,
         x='Age',
@@ -73,7 +70,6 @@ for i, level in enumerate(visible_levels):
         title=f"{level} Level – Percentage (%)"
     )
 
-    # Add annotation inside bar
     for status in ['No', 'Yes']:
         subset = data[data['Entrepreneurship'] == status]
         for _, row in subset.iterrows():
@@ -98,8 +94,8 @@ for i, level in enumerate(visible_levels):
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # === Plot 2: Line Chart with markers (Count)
-    fig_line = px.line(
+    # === Area Line Chart (Count)
+    fig_area = px.area(
         data,
         x='Age',
         y='Count',
@@ -110,18 +106,20 @@ for i, level in enumerate(visible_levels):
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,
         width=chart_width,
-        title=f"{level} Level – Count (Line Chart)"
+        title=f"{level} Level – Count (Area Chart)"
     )
 
-    fig_line.update_traces(line=dict(width=2), marker=dict(size=8))
-    fig_line.update_layout(
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
+    fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
         xaxis_tickangle=90
     )
-    fig_line.update_yaxes(title="Count")
+    fig_area.update_yaxes(title="Count")
 
-    # Display both charts in 2 rows
-    with cols[i % 2]:
+    # Display 2 charts side-by-side
+    col1, col2 = st.columns(2)
+    with col1:
         st.plotly_chart(fig_bar, use_container_width=True)
-        st.plotly_chart(fig_line, use_container_width=True)
+    with col2:
+        st.plotly_chart(fig_area, use_container_width=True)

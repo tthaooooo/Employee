@@ -67,7 +67,7 @@ for level in visible_levels:
     for status in ['No', 'Yes']:
         for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
-                y_pos = row['Percentage'] + 0.03
+                y_pos = row['Percentage'] + 0.04
                 y_pos = 0.20 if status == 'No' else 0.90
                 fig_bar.add_annotation(
                     x=row['Age'],

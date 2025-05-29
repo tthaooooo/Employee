@@ -69,7 +69,7 @@ for i, lvl in enumerate(levels_to_show):
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': sorted(data_lvl['Age'].unique())},
         labels={'Age': 'Age', y_col: y_axis_title},
         height=400,
-        width=600,
+        width=900,  # tăng chiều ngang
         title=f"{lvl} Level"
     )
 
@@ -93,7 +93,7 @@ for i, lvl in enumerate(levels_to_show):
                 text=fmt(val),
                 showarrow=False,
                 textangle=0,
-                font=dict(color="white", size=6, family="Arial Black"),
+                font=dict(color="white", size=6),  # bỏ bold
                 xanchor="center",
                 yanchor="middle"
             )
@@ -103,7 +103,7 @@ for i, lvl in enumerate(levels_to_show):
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
         xaxis_tickangle=90,
-        bargap=0.1  # thanh bar rộng hơn
+        bargap=0.1
     )
 
     fig.update_yaxes(title=y_axis_title)

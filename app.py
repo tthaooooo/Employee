@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Load and filter data
+# Load dataset
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Group and calculate percentages
+# Group and calculate
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
@@ -21,9 +21,7 @@ age_range = st.sidebar.slider("Age Range", min_value=min_age, max_value=max_age,
 statuses = ['Yes', 'No']
 selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default=statuses)
 
-mode = st.sidebar.radio("Display Mode:", ["Percentage (%)", "Count"])
-
-# Filter data
+# Filter dataset
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'].isin(selected_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
@@ -31,7 +29,7 @@ filtered = df_grouped[
     (df_grouped['Age'] <= age_range[1])
 ]
 
-# Dynamic font size based on number of bars
+# Font size helper
 def get_font_size(num_bars):
     size_map = {
         1: 20, 2: 18, 3: 16, 4: 14, 5: 12,
@@ -60,59 +58,70 @@ for i, level in enumerate(visible_levels):
 
     chart_width = max(400, min(1200, 50 * num_bars + 100))
 
-    y_col = 'Percentage' if mode == "Percentage (%)" else 'Count'
-    value_format = (lambda x: f"{x:.0%}") if mode == "Percentage (%)" else (lambda x: str(int(x)))
-    y_title = "Percentage" if mode == "Percentage (%)" else "Count"
-    tick_format = ".0%" if mode == "Percentage (%)" else None
-
-    fig = px.bar(
+    # === Plot 1: Stacked Bar Chart (%)
+    fig_bar = px.bar(
         data,
         x='Age',
-        y=y_col,
+        y='Percentage',
         color='Entrepreneurship',
         barmode='stack',
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
-        labels={'Age': 'Age', y_col: y_title},
+        labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
         width=chart_width,
-        title=f"{level} Level"
+        title=f"{level} Level – Percentage (%)"
     )
 
-    fig.update_traces(text='')
-
-    # Align labels for each status higher inside the stack
+    # Add annotation inside bar
     for status in ['No', 'Yes']:
         subset = data[data['Entrepreneurship'] == status]
-
-        if mode == "Percentage (%)":
-            y_pos = 0.20 if status == 'No' else 0.90  # raised labels a bit higher
-        else:
-            max_val = data[y_col].max()
-            y_pos = max_val * (0.20 if status == 'No' else 0.90)
-
         for _, row in subset.iterrows():
-            if row[y_col] == 0:
+            if row['Percentage'] == 0:
                 continue
-            fig.add_annotation(
+            y_pos = 0.20 if status == 'No' else 0.90
+            fig_bar.add_annotation(
                 x=row['Age'],
                 y=y_pos,
-                text=value_format(row[y_col]),
+                text=f"{row['Percentage']:.0%}",
                 showarrow=False,
                 font=dict(color="white", size=font_size),
                 xanchor="center",
                 yanchor="middle"
             )
 
-    fig.update_layout(
+    fig_bar.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
         xaxis_tickangle=90,
         bargap=0.1
     )
-    fig.update_yaxes(title=y_title)
-    if tick_format:
-        fig.update_yaxes(tickformat=tick_format)
+    fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
+    # === Plot 2: Line Chart with markers (Count)
+    fig_line = px.line(
+        data,
+        x='Age',
+        y='Count',
+        color='Entrepreneurship',
+        markers=True,
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Count': 'Count'},
+        height=400,
+        width=chart_width,
+        title=f"{level} Level – Count (Line Chart)"
+    )
+
+    fig_line.update_traces(line=dict(width=2), marker=dict(size=8))
+    fig_line.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90
+    )
+    fig_line.update_yaxes(title="Count")
+
+    # Display both charts in 2 rows
     with cols[i % 2]:
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_line, use_container_width=True)

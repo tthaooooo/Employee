@@ -59,12 +59,15 @@ for i, lvl in enumerate(levels_to_show):
             st.write(f"### {lvl} — No data")
         continue
 
-    # Tính số lượng cột (số tuổi hiển thị) để điều chỉnh font size
     num_bars = len(data_lvl['Age'].unique())
-    if num_bars <= 5:
+    if num_bars <= 3:
+        font_size = 18
+    elif num_bars <= 6:
         font_size = 14
-    elif num_bars <= 10:
+    elif num_bars <= 9:
         font_size = 10
+    elif num_bars <= 15:
+        font_size = 8
     else:
         font_size = 6
 
@@ -82,7 +85,6 @@ for i, lvl in enumerate(levels_to_show):
         title=f"{lvl} Level"
     )
 
-    # Ẩn text mặc định
     fig.update_traces(text='')
 
     bottoms = {age: 0 for age in sorted(data_lvl['Age'].unique())}

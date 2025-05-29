@@ -49,7 +49,6 @@ order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
 levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
 
 st.title("🚀 Education & Career Success Dashboard")
-
 cols = st.columns(2)
 
 for i, lvl in enumerate(levels_to_show):
@@ -62,16 +61,16 @@ for i, lvl in enumerate(levels_to_show):
     unique_ages = sorted(data_lvl['Age'].unique())
     num_bars = len(unique_ages)
 
-    # Tính kích thước biểu đồ theo số cột
+    # Font size mượt theo độ rộng mỗi cột
+    bar_width = 1200 / (num_bars + 1)  # tránh chia cho 0
+    font_size = max(min(bar_width * 0.4, 13), 3.5)
+
+    # Tính width biểu đồ
     bar_width_per_age = 70
     base_margin = 150
     max_width = 1200
     min_width = 400
     calculated_width = min(max(bar_width_per_age * num_bars + base_margin, min_width), max_width)
-
-    # Font size tự động dựa theo độ rộng cột thực tế
-    bar_width = calculated_width / max(num_bars, 1)
-    font_size = max(min(bar_width * 0.5, 14), 4)  # scale phù hợp
 
     # Tạo biểu đồ
     fig = px.bar(
@@ -90,9 +89,9 @@ for i, lvl in enumerate(levels_to_show):
 
     fig.update_traces(text='')
 
-    # Vẽ nhãn số trong từng phần stack
+    # Gắn label lên cột
     bottoms = {age: 0 for age in unique_ages}
-    stack_order = ['No', 'Yes']  # giữ đúng thứ tự stack
+    stack_order = ['No', 'Yes']
 
     for status in stack_order:
         df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
@@ -102,16 +101,15 @@ for i, lvl in enumerate(levels_to_show):
             bottom = bottoms[age]
             if val == 0:
                 continue
-            y_pos = val * 0.5 if status == 'No' else bottom + val * 0.85
+            y_pos = bottom + val * (0.5 if status == 'No' else 0.9)
 
-            # Chỉ hiển thị nếu đủ lớn
-            if font_size >= 5:
+            # Nếu giá trị quá nhỏ hoặc font nhỏ quá thì ẩn đi
+            if val > 0.03 and font_size > 3.5:
                 fig.add_annotation(
                     x=age,
                     y=y_pos,
                     text=fmt(val),
                     showarrow=False,
-                    textangle=0,
                     font=dict(color="white", size=font_size),
                     xanchor="center",
                     yanchor="middle"
@@ -123,7 +121,7 @@ for i, lvl in enumerate(levels_to_show):
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
         xaxis_tickangle=90,
-        bargap=0.1
+        bargap=0.25  # tăng khoảng giữa các cột
     )
 
     fig.update_yaxes(title=y_axis_title)
@@ -131,4 +129,4 @@ for i, lvl in enumerate(levels_to_show):
         fig.update_yaxes(tickformat=y_tick_format)
 
     with cols[i % 2]:
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)

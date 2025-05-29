@@ -37,11 +37,13 @@ if mode == "Percentage (%)":
     fmt = lambda x: f"{x:.0%}"
     y_axis_title = "Percentage"
     y_tick_format = ".0%"
+    label_offset = 0.01
 else:
     y_col = 'Count'
     fmt = lambda x: str(x)
     y_axis_title = "Count"
     y_tick_format = None
+    label_offset = 1
 
 # Cấu hình hiển thị
 colors = {'Yes': '#FFD700', 'No': '#004080'}
@@ -59,9 +61,10 @@ for i, lvl in enumerate(levels_to_show):
             st.write(f"### {lvl} — No data")
         continue
 
-    num_bars = len(data_lvl['Age'].unique())
-    
-    # Thiết lập kích thước chữ nhãn theo số cột
+    unique_ages = sorted(data_lvl['Age'].unique())
+    num_bars = len(unique_ages)
+
+    # Font size theo số lượng cột
     if num_bars <= 3:
         font_size = 18
     elif num_bars <= 6:
@@ -73,11 +76,14 @@ for i, lvl in enumerate(levels_to_show):
     else:
         font_size = 6
 
-    # 👉 Thêm đoạn này: Tính chiều rộng động cho biểu đồ
-    bar_width = 40  # mỗi cột chiếm 40px
+    # Width biểu đồ tự điều chỉnh theo số cột
+    bar_width_per_age = 70
+    base_margin = 150
+    max_width = 1200
     min_width = 400
-    calculated_width = max(min_width, bar_width * num_bars)
+    calculated_width = min(max(bar_width_per_age * num_bars + base_margin, min_width), max_width)
 
+    # Tạo biểu đồ
     fig = px.bar(
         data_lvl,
         x='Age',
@@ -85,7 +91,7 @@ for i, lvl in enumerate(levels_to_show):
         color='Entrepreneurship',
         barmode='stack',
         color_discrete_map=colors,
-        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': sorted(data_lvl['Age'].unique())},
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': unique_ages},
         labels={'Age': 'Age', y_col: y_axis_title},
         height=400,
         width=calculated_width,
@@ -94,28 +100,25 @@ for i, lvl in enumerate(levels_to_show):
 
     fig.update_traces(text='')
 
-    bottoms = {age: 0 for age in sorted(data_lvl['Age'].unique())}
-    stack_order = ['No', 'Yes']
-
-    for status in stack_order:
-        df_status = data_lvl[data_lvl['Entrepreneurship'] == status]
-        for _, row in df_status.iterrows():
-            age = row['Age']
-            val = row[y_col]
-            bottom = bottoms[age]
-            y_pos = bottom + val / 2
+    # Hiển thị phần trăm hoặc count tại đỉnh mỗi cột, căn thẳng hàng
+    for age in unique_ages:
+        for idx, status in enumerate(['No', 'Yes']):
+            row = data_lvl[(data_lvl['Age'] == age) & (data_lvl['Entrepreneurship'] == status)]
+            if row.empty:
+                continue
+            val = row.iloc[0][y_col]
             fig.add_annotation(
-                x=age,
-                y=y_pos,
+                x=age + (-0.2 if status == 'No' else 0.2),  # lệch ngang chút để không đè lên nhau
+                y=data_lvl[data_lvl['Age'] == age][y_col].sum() + label_offset,
                 text=fmt(val),
                 showarrow=False,
                 textangle=0,
-                font=dict(color="white", size=font_size),
+                font=dict(color="black", size=font_size),
                 xanchor="center",
-                yanchor="middle"
+                yanchor="bottom"
             )
-            bottoms[age] += val
 
+    # Cập nhật layout
     fig.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
@@ -128,3 +131,4 @@ for i, lvl in enumerate(levels_to_show):
         fig.update_yaxes(tickformat=y_tick_format)
 
     with cols[i % 2]:
+        st.plotly_chart(fig, use_container_width=True)

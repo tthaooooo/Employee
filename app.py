@@ -98,7 +98,7 @@ for i, lvl in enumerate(levels_to_show):
 
     fig.update_traces(text='')
 
-    # Gắn label nằm trong phần stack tương ứng
+    # Gắn label nằm trong phần stack tương ứng, gần đỉnh mỗi phần stack
     bottoms = {age: 0 for age in unique_ages}
     stack_order = ['No', 'Yes']  # đảm bảo đúng thứ tự stacking
 
@@ -110,8 +110,13 @@ for i, lvl in enumerate(levels_to_show):
             bottom = bottoms[age]
             if val == 0:
                 continue
-            # Đặt text nằm trong phần stack màu tương ứng, gần đỉnh
-            y_pos = bottom + val * 0.85
+            # Nếu là phần stack đầu (No), đặt label ở giữa cột (val * 0.5)
+            # Nếu là phần stack trên (Yes), đặt gần đỉnh (bottom + val * 0.85)
+            if status == 'No':
+                y_pos = val * 0.5
+            else:
+                y_pos = bottom + val * 0.85
+
             fig.add_annotation(
                 x=age,
                 y=y_pos,

@@ -86,10 +86,10 @@ for i, level in enumerate(visible_levels):
         subset = data[data['Entrepreneurship'] == status]
 
         if mode == "Percentage (%)":
-            y_pos = 0.15 if status == 'No' else 0.85
-        else:
-            max_val = data[y_col].max()
-            y_pos = max_val * (0.15 if status == 'No' else 0.85)
+    y_pos = 0.20 if status == 'No' else 0.90  # tăng nhẹ vị trí
+else:
+    max_val = data[y_col].max()
+    y_pos = max_val * (0.20 if status == 'No' else 0.90)
 
         for _, row in subset.iterrows():
             if row[y_col] == 0:

@@ -60,6 +60,8 @@ for i, lvl in enumerate(levels_to_show):
         continue
 
     num_bars = len(data_lvl['Age'].unique())
+    
+    # Thiết lập kích thước chữ nhãn theo số cột
     if num_bars <= 3:
         font_size = 18
     elif num_bars <= 6:
@@ -71,6 +73,11 @@ for i, lvl in enumerate(levels_to_show):
     else:
         font_size = 6
 
+    # 👉 Thêm đoạn này: Tính chiều rộng động cho biểu đồ
+    bar_width = 40  # mỗi cột chiếm 40px
+    min_width = 400
+    calculated_width = max(min_width, bar_width * num_bars)
+
     fig = px.bar(
         data_lvl,
         x='Age',
@@ -81,7 +88,7 @@ for i, lvl in enumerate(levels_to_show):
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': sorted(data_lvl['Age'].unique())},
         labels={'Age': 'Age', y_col: y_axis_title},
         height=400,
-        width=900,
+        width=calculated_width,
         title=f"{lvl} Level"
     )
 
@@ -121,4 +128,3 @@ for i, lvl in enumerate(levels_to_show):
         fig.update_yaxes(tickformat=y_tick_format)
 
     with cols[i % 2]:
-        st.plotly_chart(fig, use_container_width=True)

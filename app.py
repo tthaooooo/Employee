@@ -2,38 +2,38 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# Đọc và xử lý dữ liệu
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
 df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
+# Sidebar: Filters
 st.sidebar.title("Filters")
+
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_levels = st.sidebar.multiselect("Job Levels", job_levels, default=job_levels)
 
-ages = sorted(df_grouped['Age'].unique())
-ages_all = ['ALL'] + [str(a) for a in ages]
-selected_ages = st.sidebar.multiselect("Ages", ages_all, default=['ALL'])
+# Slider chọn khoảng tuổi
+min_age = int(df_grouped['Age'].min())
+max_age = int(df_grouped['Age'].max())
+selected_age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
 statuses = ['Yes', 'No']
 selected_statuses = st.sidebar.multiselect("Entrepreneurship", statuses, default=statuses)
 
 mode = st.sidebar.radio("Show as:", ["Percentage (%)", "Count"])
 
-if 'ALL' in selected_ages:
-    filtered = df_grouped[
-        df_grouped['Current_Job_Level'].isin(selected_levels) &
-        df_grouped['Entrepreneurship'].isin(selected_statuses)
-    ]
-else:
-    selected_ages_int = [int(a) for a in selected_ages]
-    filtered = df_grouped[
-        (df_grouped['Current_Job_Level'].isin(selected_levels)) &
-        (df_grouped['Age'].isin(selected_ages_int)) &
-        (df_grouped['Entrepreneurship'].isin(selected_statuses))
-    ]
+# Lọc dữ liệu theo filter
+filtered = df_grouped[
+    (df_grouped['Current_Job_Level'].isin(selected_levels)) &
+    (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
+    (df_grouped['Age'] >= selected_age_range[0]) &
+    (df_grouped['Age'] <= selected_age_range[1])
+]
 
+# Thiết lập hiển thị
 if mode == "Percentage (%)":
     y_col = 'Percentage'
     fmt = lambda x: f"{x:.0%}"
@@ -49,8 +49,10 @@ colors = {'Yes': '#FFD700', 'No': '#004080'}
 order_levels = ['Entry', 'Executive', 'Mid', 'Senior']
 levels_to_show = [lvl for lvl in order_levels if lvl in selected_levels]
 
+# Title
 st.title("🚀 Education & Career Success Dashboard")
 
+# Hiển thị biểu đồ
 cols = st.columns(2)
 
 for i, lvl in enumerate(levels_to_show):

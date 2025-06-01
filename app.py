@@ -102,22 +102,29 @@ for level in visible_levels:
         title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
 
-    # Add vertical reference lines – mean age per group + custom legend dots
+    # Add vertical reference lines + icon with hover text for each 'Yes' and 'No'
     for status in ['Yes', 'No']:
-        avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
+        status_data = data[data['Entrepreneurship'] == status]
+        if status_data.empty:
+            continue
+        avg_age = status_data['Age'].mean()
+        avg_count = status_data['Count'].mean()
+
         fig_area.add_vline(
             x=avg_age,
             line_dash="dot",
             line_color=color_map[status],
             line_width=1.2,
         )
-        # Add dummy scatter point for custom legend
+
+        # Add visible marker with hover info
         fig_area.add_trace(go.Scatter(
-            x=[None],
-            y=[None],
+            x=[avg_age],
+            y=[avg_count],
             mode='markers',
-            marker=dict(symbol='circle', size=10, color=color_map[status]),
-            name=f"{status} Avg Age: {avg_age:.1f}"
+            marker=dict(size=12, color=color_map[status], symbol='circle'),
+            name=f"{level} {status} : {avg_count:.2f}",
+            hovertemplate=f"<b>{level} - {status}<br>Avg Count: {avg_count:.2f}<br>Avg Age: {avg_age:.1f}</b><extra></extra>"
         ))
 
     fig_area.update_traces(line=dict(width=2), marker=dict(size=8))

@@ -3,79 +3,129 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Load data
-df = pd.read_csv("education_career_success.csv")
+# Load and preprocess data
+df = pd.read_csv('education_career_success.csv')
+df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Drop rows with missing values in required columns
-df = df.dropna(subset=['Work_Life_Balance', 'Years_to_Promotion', 'Current_Job_Level'])
+df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
+df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Grouped data for bar chart
-df_grouped_bar = df.groupby(['Current_Job_Level', 'Years_to_Promotion']).agg({
-    'Work_Life_Balance': 'mean'
-}).reset_index()
+# Sidebar filters
+st.sidebar.title("Filters")
+job_levels = sorted(df_grouped['Current_Job_Level'].unique())
+selected_levels = st.sidebar.multiselect("Select Job Levels", job_levels, default=job_levels)
 
-# Grouped data for line chart
-job_levels_order = ['Entry', 'Mid', 'Senior', 'Executive']
-df_grouped_line = df_grouped_bar.copy()
-df_grouped_line['Current_Job_Level'] = pd.Categorical(df_grouped_line['Current_Job_Level'], categories=job_levels_order, ordered=True)
+min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
+age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Color map
-color_map = {
-    'Entry': '#1f77b4',
-    'Mid': '#ff7f0e',
-    'Senior': '#2ca02c',
-    'Executive': '#d62728'
-}
+selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Line chart with custom legend
-fig_line = go.Figure()
-for level in job_levels_order:
-    level_data = df_grouped_line[df_grouped_line['Current_Job_Level'] == level]
-    if not level_data.empty:
-        avg_value = level_data['Work_Life_Balance'].mean()
-        fig_line.add_trace(go.Scatter(
-            x=level_data['Years_to_Promotion'],
-            y=level_data['Work_Life_Balance'],
-            mode='lines+markers',
-            name=f"{level} : {avg_value:.2f}",
-            line=dict(width=2, color=color_map[level]),
-            marker=dict(symbol='circle', size=8)
-        ))
+# Filter data
+filtered = df_grouped[
+    (df_grouped['Current_Job_Level'].isin(selected_levels)) &
+    (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
+    (df_grouped['Age'].between(age_range[0], age_range[1]))
+]
 
-# Add reference line
-overall_avg = df['Work_Life_Balance'].mean()
-fig_line.add_hline(y=overall_avg, line_dash="dot", line_color="black",
-              annotation_text=f"Overall Avg: {overall_avg:.2f}",
-              annotation_position="top left")
+# Font size adjustment based on bar count
+def get_font_size(n):
+    return {1: 20, 2: 18, 3: 16, 4: 14, 5: 12, 6: 11, 7: 10, 8: 9, 9: 8, 10: 7}.get(n, 6)
 
-fig_line.update_layout(
-    title="📊 Average Work-Life Balance by Years to Promotion",
-    xaxis_title="Years to Promotion",
-    yaxis_title="Average Work-Life Balance",
-    legend_title_text="Job Level",
-    height=500,
-    margin=dict(t=40, l=40, r=40, b=40)
-)
+# Chart colors
+color_map = {'Yes': '#FFD700', 'No': '#004080'}
+level_order = ['Entry', 'Executive', 'Mid', 'Senior']
+visible_levels = [lvl for lvl in level_order if lvl in selected_levels]
 
-# Stacked bar chart
-df_grouped_stacked = df.groupby(['Years_to_Promotion', 'Current_Job_Level']).agg({
-    'Work_Life_Balance': 'mean'
-}).reset_index()
+# Page title
+st.title("🚀 Education & Career Success Dashboard")
 
-fig_stacked = px.bar(df_grouped_stacked,
-                     x='Years_to_Promotion',
-                     y='Work_Life_Balance',
-                     color='Current_Job_Level',
-                     color_discrete_map=color_map,
-                     title="Stacked Work-Life Balance by Years to Promotion",
-                     labels={
-                         'Years_to_Promotion': 'Years to Promotion',
-                         'Work_Life_Balance': 'Average Work-Life Balance',
-                         'Current_Job_Level': 'Job Level'
-                     })
-fig_stacked.update_layout(barmode='stack', height=500, margin=dict(t=40, l=40, r=40, b=40))
+# Display each level's charts
+for level in visible_levels:
+    data = filtered[filtered['Current_Job_Level'] == level]
+    if data.empty:
+        st.write(f"### {level} – No data available")
+        continue
 
-# Streamlit display
-st.title("💼 Work-Life Balance by Job Level and Promotion Timeline")
-st.plotly_chart(fig_line, use_container_width=True)
-st.plotly_chart(fig_stacked, use_container_width=True)
+    ages = sorted(data['Age'].unique())
+    font_size = get_font_size(len(ages))
+    chart_width = max(400, min(1200, 50 * len(ages) + 100))
+
+    # Stacked Bar Chart (Percentage)
+    fig_bar = px.bar(
+        data,
+        x='Age',
+        y='Percentage',
+        color='Entrepreneurship',
+        barmode='stack',
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Percentage': 'Percentage'},
+        height=400,
+        width=chart_width,
+        title=f"{level} Level – Entrepreneurship by Age (%)"
+    )
+
+    for status in ['No', 'Yes']:
+        for _, row in data[data['Entrepreneurship'] == status].iterrows():
+            if row['Percentage'] > 0:
+                y_pos = 0.20 if status == 'No' else 0.90
+                fig_bar.add_annotation(
+                    x=row['Age'],
+                    y=y_pos,
+                    text=f"{row['Percentage']:.0%}",
+                    showarrow=False,
+                    font=dict(color="white", size=font_size),
+                    xanchor="center",
+                    yanchor="middle"
+                )
+
+    fig_bar.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90,
+        bargap=0.1
+    )
+    fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
+
+    # Area Chart with Markers (Count)
+    fig_area = px.area(
+        data,
+        x='Age',
+        y='Count',
+        color='Entrepreneurship',
+        markers=True,
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Count': 'Count'},
+        height=400,
+        width=chart_width,
+        title=f"{level} Level – Entrepreneurship by Age (Count)"
+    )
+
+    # Add vertical reference lines – mean age per group
+    for status in ['Yes', 'No']:
+        avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
+        fig_area.add_vline(
+            x=avg_age,
+            line_dash="dot",
+            line_color=color_map[status],
+            annotation_text=f"{status} Avg Age: {avg_age:.1f}",
+            annotation_position="top left",
+            annotation_font_size=12,
+            annotation_font_color=color_map[status]
+        )
+
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
+    fig_area.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90
+    )
+    fig_area.update_yaxes(title="Count")
+
+    # Show charts side by side
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(fig_bar, use_container_width=True)
+    with col2:
+        st.plotly_chart(fig_area, use_container_width=True)

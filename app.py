@@ -67,7 +67,6 @@ for level in visible_levels:
     for status in ['No', 'Yes']:
         for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
-                y_pos = row['Percentage'] + 0.08
                 y_pos = 0.20 if status == 'No' else 0.90
                 fig_bar.add_annotation(
                     x=row['Age'],
@@ -101,6 +100,19 @@ for level in visible_levels:
         width=chart_width,
         title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
+
+    # Add reference line: average count per group
+    for status in ['Yes', 'No']:
+        avg = data[data['Entrepreneurship'] == status]['Count'].mean()
+        fig_area.add_hline(
+            y=avg,
+            line_dash="dot",
+            line_color=color_map[status],
+            annotation_text=f"{status} Avg: {avg:.0f}",
+            annotation_position="top left",
+            annotation_font_size=12,
+            annotation_font_color=color_map[status]
+        )
 
     fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
     fig_area.update_layout(

@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
@@ -101,14 +102,14 @@ for level in visible_levels:
         title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
 
-    # Add reference line: average count per group
+    # Add vertical reference lines – mean age per group
     for status in ['Yes', 'No']:
-        avg = data[data['Entrepreneurship'] == status]['Count'].mean()
-        fig_area.add_hline(
-            y=avg,
+        avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
+        fig_area.add_vline(
+            x=avg_age,
             line_dash="dot",
             line_color=color_map[status],
-            annotation_text=f"{status} Avg: {avg:.0f}",
+            annotation_text=f"{status} Avg Age: {avg_age:.1f}",
             annotation_position="top left",
             annotation_font_size=12,
             annotation_font_color=color_map[status]

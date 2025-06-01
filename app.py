@@ -102,18 +102,23 @@ for level in visible_levels:
         title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
 
-    # Add vertical reference lines – mean age per group
+    # Add vertical reference lines – mean age per group + custom legend dots
     for status in ['Yes', 'No']:
         avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
         fig_area.add_vline(
             x=avg_age,
             line_dash="dot",
             line_color=color_map[status],
-            annotation_text=f"{status} Avg Age: {avg_age:.1f}",
-            annotation_position="top left",
-            annotation_font_size=12,
-            annotation_font_color=color_map[status]
+            line_width=1.2,
         )
+        # Add dummy scatter point for custom legend
+        fig_area.add_trace(go.Scatter(
+            x=[None],
+            y=[None],
+            mode='markers',
+            marker=dict(symbol='circle', size=10, color=color_map[status]),
+            name=f"{status} Avg Age: {avg_age:.1f}"
+        ))
 
     fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
     fig_area.update_layout(

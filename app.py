@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 # Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
@@ -50,7 +49,7 @@ for level in visible_levels:
     font_size = get_font_size(len(ages))
     chart_width = max(400, min(1200, 50 * len(ages) + 100))
 
-    # Stacked Bar Chart (Percentage)
+    # Stacked Bar Chart (Percentage) — chỉ giữ phần trăm, bỏ annotation phức tạp
     fig_bar = px.bar(
         data,
         x='Age',
@@ -65,10 +64,11 @@ for level in visible_levels:
         title=f"{level} Level – Entrepreneurship by Age (%)"
     )
 
+    # Thêm annotation phần trăm đơn giản
     for status in ['No', 'Yes']:
         for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
-                y_pos = 0.20 if status == 'No' else 0.90
+                y_pos = row['Percentage'] / 2  # đặt ở giữa phần bar tương ứng
                 fig_bar.add_annotation(
                     x=row['Age'],
                     y=y_pos,
@@ -87,7 +87,7 @@ for level in visible_levels:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart with Markers (Count)
+    # Area Chart với markers (Count) — chỉ giữ dấu chấm, bỏ các dòng tham chiếu, annotation khác
     fig_area = px.area(
         data,
         x='Age',
@@ -102,24 +102,9 @@ for level in visible_levels:
         title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
 
-    # Add vertical reference lines – mean age per group + custom legend dots
-    for status in ['Yes', 'No']:
-        avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
-        fig_area.add_vline(-
-            x=avg_age,
-            line_dash="dot",
-            line_color=color_map[status],
-            line_width=1.2,
-        )
-        # Add dummy scatter point for custom legend
-        fig_area.add_trace(go.Scatter(
-            x=[None],
-            y=[None],
-            mode='markers',
-            marker=dict(symbol='circle', size=10, color=color_map[status]),
-            name=f"{status} Avg Age: {avg_age:.1f}"
-        ))
+    # Bỏ các vertical lines và dummy scatter legend
 
+    # Chỉnh lại dấu chấm to vừa phải, nét line mượt
     fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
@@ -128,12 +113,9 @@ for level in visible_levels:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Show charts side by side
+    # Hiển thị 2 biểu đồ song song
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
         st.plotly_chart(fig_area, use_container_width=True)
-
-
-

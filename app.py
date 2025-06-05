@@ -40,7 +40,6 @@ chart_width = max(400, min(1200, 50 * len(ages) + 100))
 # Page title
 st.title("🚀 Education & Career Success Dashboard")
 
-# If data is empty
 if filtered.empty:
     st.warning(f"No data available for '{selected_level}' with selected filters.")
 else:
@@ -81,7 +80,7 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart with Markers (Count)
+    # Area Chart (Count)
     fig_area = px.area(
         filtered,
         x='Age',
@@ -104,15 +103,8 @@ else:
             line_color=color_map[status],
             line_width=1.2,
         )
-        fig_area.add_trace(go.Scatter(
-            x=[None],
-            y=[None],
-            mode='markers',
-            marker=dict(symbol='circle', size=10, color=color_map[status]),
-            name=f"{status} Avg Age: {avg_age:.1f}"
-        ))
 
-    fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=5))  # smaller dots
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
@@ -120,7 +112,7 @@ else:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Show charts side by side
+    # Display side-by-side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)

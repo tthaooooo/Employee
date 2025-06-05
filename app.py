@@ -43,11 +43,6 @@ if data.empty:
 else:
     ages = sorted(data['Age'].unique())
     font_size = get_font_size(len(ages))
-    
-    # Tăng chiều rộng theo số lượng tuổi
-    chart_base_width = 70  # mỗi cột tuổi ~70px
-    chart_offset = 200     # lề phụ thêm
-    chart_width = chart_base_width * len(ages) + chart_offset
 
     # Stacked Bar Chart (Percentage)
     fig_bar = px.bar(
@@ -60,7 +55,6 @@ else:
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
-        width=chart_width,
         title=f"{selected_level} Level – Entrepreneurship by Age (%)"
     )
 
@@ -68,12 +62,13 @@ else:
         for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
                 y_pos = 0.20 if status == 'No' else 0.90
+                text = f"{row['Age']} y/o<br>{status}<br>{row['Percentage']:.0%}"
                 fig_bar.add_annotation(
                     x=row['Age'],
                     y=y_pos,
-                    text=f"{row['Percentage']:.0%}",
+                    text=text,
                     showarrow=False,
-                    font=dict(color="white", size=font_size),
+                    font=dict(color="white", size=font_size - 2),
                     xanchor="center",
                     yanchor="middle"
                 )
@@ -97,11 +92,24 @@ else:
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,
-        width=chart_width,
         title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
-    fig_area.update_traces(line=dict(width=2), marker=dict(size=5))
+    # Add detailed hover info via text
+    for status in ['No', 'Yes']:
+        status_data = data[data['Entrepreneurship'] == status]
+        fig_area.add_trace(go.Scatter(
+            x=status_data['Age'],
+            y=status_data['Count'],
+            mode='markers+text',
+            name=f"{status}",
+            text=[f"{age} y/o<br>{status}<br>{count} people" for age, count in zip(status_data['Age'], status_data['Count'])],
+            textposition="top center",
+            marker=dict(color=color_map[status], size=5),
+            showlegend=False
+        ))
+
+    fig_area.update_traces(line=dict(width=2))
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
@@ -109,9 +117,9 @@ else:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Display side-by-side
+    # Display side-by-side responsively
     col1, col2 = st.columns(2)
     with col1:
-        st.plotly_chart(fig_bar)
+        st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
-        st.plotly_chart(fig_area)
+        st.plotly_chart(fig_area, use_container_width=True)

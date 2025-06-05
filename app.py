@@ -27,23 +27,23 @@ filtered = df_grouped[
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
-# Font size function
+# Font size adjustment
 def get_font_size(n):
     return {1: 20, 2: 18, 3: 16, 4: 14, 5: 12, 6: 11, 7: 10, 8: 9, 9: 8, 10: 7}.get(n, 6)
 
-# Color setup
+# Colors and layout
 color_map = {'Yes': '#FFD700', 'No': '#004080'}
 ages = sorted(filtered['Age'].unique())
 font_size = get_font_size(len(ages))
-chart_width = max(400, min(1200, 50 * len(ages) + 100))
+bar_width = max(500, min(1300, 50 * len(ages) + 100))
+area_width = bar_width + 200  # area chart wider
 
-# Page title
 st.title("🚀 Education & Career Success Dashboard")
 
 if filtered.empty:
-    st.warning(f"No data available for '{selected_level}' with selected filters.")
+    st.write(f"### {selected_level} – No data available")
 else:
-    # Stacked Bar Chart (Percentage)
+    # Stacked Bar Chart
     fig_bar = px.bar(
         filtered,
         x='Age',
@@ -54,7 +54,7 @@ else:
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
-        width=chart_width,
+        width=bar_width,
         title=f"{selected_level} Level – Entrepreneurship by Age (%)"
     )
 
@@ -80,7 +80,7 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart (Count)
+    # Area Chart
     fig_area = px.area(
         filtered,
         x='Age',
@@ -91,10 +91,11 @@ else:
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,
-        width=chart_width,
+        width=area_width,
         title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
+    # Vertical lines without dummy legends
     for status in ['Yes', 'No']:
         avg_age = filtered[filtered['Entrepreneurship'] == status]['Age'].mean()
         fig_area.add_vline(
@@ -104,7 +105,7 @@ else:
             line_width=1.2,
         )
 
-    fig_area.update_traces(line=dict(width=2), marker=dict(size=5))  # smaller dots
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=5))
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
@@ -112,7 +113,7 @@ else:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Display side-by-side
+    # Show side by side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)

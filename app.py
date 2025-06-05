@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 # Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
@@ -62,18 +61,18 @@ else:
         for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
                 y_pos = 0.20 if status == 'No' else 0.90
-                text = f"{row['Age']} y/o<br>{status}<br>{row['Percentage']:.0%}"
                 fig_bar.add_annotation(
                     x=row['Age'],
                     y=y_pos,
-                    text=text,
+                    text=f"{row['Percentage']:.0%}",
                     showarrow=False,
-                    font=dict(color="white", size=font_size - 2),
+                    font=dict(color="white", size=font_size),
                     xanchor="center",
                     yanchor="middle"
                 )
 
     fig_bar.update_layout(
+        autosize=True,
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
         xaxis_tickangle=90,
@@ -81,7 +80,7 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart (Count) with markers
+    # Area Chart (Count) with markers and annotations
     fig_area = px.area(
         data,
         x='Age',
@@ -95,29 +94,30 @@ else:
         title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
-    # Add detailed hover info via text
-    for status in ['No', 'Yes']:
-        status_data = data[data['Entrepreneurship'] == status]
-        fig_area.add_trace(go.Scatter(
-            x=status_data['Age'],
-            y=status_data['Count'],
-            mode='markers+text',
-            name=f"{status}",
-            text=[f"{age} y/o<br>{status}<br>{count} people" for age, count in zip(status_data['Age'], status_data['Count'])],
-            textposition="top center",
-            marker=dict(color=color_map[status], size=5),
-            showlegend=False
-        ))
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=4))
 
-    fig_area.update_traces(line=dict(width=2))
+    for _, row in data.iterrows():
+        fig_area.add_annotation(
+            x=row['Age'],
+            y=row['Count'],
+            text=str(row['Count']),
+            showarrow=True,
+            arrowhead=2,
+            ax=0,
+            ay=-25,
+            font=dict(size=10),
+            bgcolor='rgba(255,255,255,0.7)'
+        )
+
     fig_area.update_layout(
+        autosize=True,
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
         xaxis_tickangle=90
     )
     fig_area.update_yaxes(title="Count")
 
-    # Display side-by-side responsively
+    # Display side-by-side with responsive width
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)

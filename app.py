@@ -13,16 +13,17 @@ df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Cou
 # Sidebar filters
 st.sidebar.title("Filters")
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
-selected_levels = st.sidebar.multiselect("Select Job Levels", job_levels, default=job_levels)
+# Thay multiselect bằng selectbox (dropdown) để chọn 1 level duy nhất
+selected_level = st.sidebar.selectbox("Select Job Level", job_levels, index=0)
 
 min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
 selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Filter data
+# Filter data chỉ với 1 level được chọn
 filtered = df_grouped[
-    (df_grouped['Current_Job_Level'].isin(selected_levels)) &
+    (df_grouped['Current_Job_Level'] == selected_level) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
@@ -33,26 +34,23 @@ def get_font_size(n):
 
 # Chart colors
 color_map = {'Yes': '#FFD700', 'No': '#004080'}
-level_order = ['Entry', 'Executive', 'Mid', 'Senior']
-visible_levels = [lvl for lvl in level_order if lvl in selected_levels]
 
 # Page title
 st.title("🚀 Education & Career Success Dashboard")
 
-# Display each level's charts
-for level in visible_levels:
-    data = filtered[filtered['Current_Job_Level'] == level]
-    if data.empty:
-        st.write(f"### {level} – No data available")
-        continue
-
-    ages = sorted(data['Age'].unique())
+# Nếu không có data
+if filtered.empty:
+    st.write(f"### {selected_level} – No data available")
+else:
+    ages = sorted(filtered['Age'].unique())
     font_size = get_font_size(len(ages))
-    chart_width = max(400, min(1200, 50 * len(ages) + 100))
+    # Tăng độ rộng cả 2 chart, ví dụ width = 1000
+    chart_width = 1000
+    chart_height = 450
 
     # Stacked Bar Chart (Percentage)
     fig_bar = px.bar(
-        data,
+        filtered,
         x='Age',
         y='Percentage',
         color='Entrepreneurship',
@@ -60,13 +58,13 @@ for level in visible_levels:
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
-        height=400,
+        height=chart_height,
         width=chart_width,
-        title=f"{level} Level – Entrepreneurship by Age (%)"
+        title=f"{selected_level} Level – Entrepreneurship by Age (%)"
     )
 
     for status in ['No', 'Yes']:
-        for _, row in data[data['Entrepreneurship'] == status].iterrows():
+        for _, row in filtered[filtered['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
                 y_pos = 0.20 if status == 'No' else 0.90
                 fig_bar.add_annotation(
@@ -89,7 +87,7 @@ for level in visible_levels:
 
     # Area Chart with Markers (Count)
     fig_area = px.area(
-        data,
+        filtered,
         x='Age',
         y='Count',
         color='Entrepreneurship',
@@ -97,14 +95,14 @@ for level in visible_levels:
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
-        height=400,
+        height=chart_height,
         width=chart_width,
-        title=f"{level} Level – Entrepreneurship by Age (Count)"
+        title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
     # Add vertical reference lines – mean age per group + custom legend dots
     for status in ['Yes', 'No']:
-        avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
+        avg_age = filtered[filtered['Entrepreneurship'] == status]['Age'].mean()
         fig_area.add_vline(
             x=avg_age,
             line_dash="dot",
@@ -128,8 +126,8 @@ for level in visible_levels:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Show charts side by side
-    col1, col2 = st.columns(2)
+    # Hiển thị 2 chart ngang hàng, rộng hơn
+    col1, col2 = st.columns([1, 1])
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:

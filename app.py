@@ -50,7 +50,7 @@ for level in visible_levels:
     font_size = get_font_size(len(ages))
     chart_width = max(400, min(1200, 50 * len(ages) + 100))
 
-    # Stacked Bar Chart (Percentage)
+    # Stacked Bar Chart (Percentage) - only % text annotation
     fig_bar = px.bar(
         data,
         x='Age',
@@ -65,19 +65,18 @@ for level in visible_levels:
         title=f"{level} Level – Entrepreneurship by Age (%)"
     )
 
-    for status in ['No', 'Yes']:
-        for _, row in data[data['Entrepreneurship'] == status].iterrows():
-            if row['Percentage'] > 0:
-                y_pos = 0.20 if status == 'No' else 0.90
-                fig_bar.add_annotation(
-                    x=row['Age'],
-                    y=y_pos,
-                    text=f"{row['Percentage']:.0%}",
-                    showarrow=False,
-                    font=dict(color="white", size=font_size),
-                    xanchor="center",
-                    yanchor="middle"
-                )
+    # Add only % annotation inside bars
+    for _, row in data.iterrows():
+        if row['Percentage'] > 0:
+            fig_bar.add_annotation(
+                x=row['Age'],
+                y=row['Percentage'] / 2,  # đặt annotation chính giữa thanh % stacked
+                text=f"{row['Percentage']:.0%}",
+                showarrow=False,
+                font=dict(color="white", size=font_size),
+                xanchor="center",
+                yanchor="middle"
+            )
 
     fig_bar.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
@@ -87,46 +86,27 @@ for level in visible_levels:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart with Markers (Count)
-    fig_area = px.area(
-        data,
-        x='Age',
-        y='Count',
-        color='Entrepreneurship',
-        markers=True,
-        color_discrete_map=color_map,
-        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
-        labels={'Age': 'Age', 'Count': 'Count'},
-        height=400,
-        width=chart_width,
-        title=f"{level} Level – Entrepreneurship by Age (Count)"
-    )
-
-    # Add vertical reference lines – mean age per group + custom legend dots
-    for status in ['Yes', 'No']:
-        avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
-        fig_area.add_vline(-
-            x=avg_age,
-            line_dash="dot",
-            line_color=color_map[status],
-            line_width=1.2,
-        )
-        # Add dummy scatter point for custom legend
+    # Area Chart with markers only (no lines, no annotations except dots)
+    fig_area = go.Figure()
+    for status in ['No', 'Yes']:
+        status_data = data[data['Entrepreneurship'] == status]
         fig_area.add_trace(go.Scatter(
-            x=[None],
-            y=[None],
+            x=status_data['Age'],
+            y=status_data['Count'],
             mode='markers',
-            marker=dict(symbol='circle', size=10, color=color_map[status]),
-            name=f"{status} Avg Age: {avg_age:.1f}"
+            marker=dict(color=color_map[status], size=8),
+            name=status
         ))
 
-    fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
     fig_area.update_layout(
+        height=400,
+        width=chart_width,
+        title=f"{level} Level – Entrepreneurship by Age (Count)",
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
-        xaxis_tickangle=90
+        xaxis=dict(title='Age', tickangle=90),
+        yaxis=dict(title='Count')
     )
-    fig_area.update_yaxes(title="Count")
 
     # Show charts side by side
     col1, col2 = st.columns(2)
@@ -134,6 +114,3 @@ for level in visible_levels:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
         st.plotly_chart(fig_area, use_container_width=True)
-
-
-

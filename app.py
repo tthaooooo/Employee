@@ -1,105 +1,75 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 # Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
-df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
-
-df_grouped = df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
+df_filtered = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
+df_grouped = df_filtered.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship']).size().reset_index(name='Count')
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
 # Sidebar filters
-st.sidebar.title("Filters")
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
-selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
-
+selected_bar_levels = st.sidebar.multiselect("Select Job Levels (Bar/Area Charts)", job_levels, default=job_levels)
 min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
-
 selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Filter data
 filtered = df_grouped[
-    (df_grouped['Current_Job_Level'] == selected_level) &
+    (df_grouped['Current_Job_Level'].isin(selected_bar_levels)) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
-def get_font_size(n):
+def get_font_size(n): 
     return {1: 20, 2: 18, 3: 16, 4: 14, 5: 12, 6: 11, 7: 10, 8: 9, 9: 8, 10: 7}.get(n, 6)
 
 color_map = {'Yes': '#FFD700', 'No': '#004080'}
+level_order = ['Entry', 'Executive', 'Mid', 'Senior']
+visible_levels = [lvl for lvl in level_order if lvl in selected_bar_levels]
 
-st.title("🚀 Education & Career Success Dashboard")
+st.header("📊 Entrepreneurship by Age and Job Level")
 
-if filtered.empty:
-    st.write(f"### {selected_level} – No data available")
-else:
-    ages = sorted(filtered['Age'].unique())
+for level in visible_levels:
+    data = filtered[filtered['Current_Job_Level'] == level]
+    if data.empty:
+        st.write(f"### {level} – No data available")
+        continue
+
+    ages = sorted(data['Age'].unique())
     font_size = get_font_size(len(ages))
+    chart_width = max(400, min(1200, 50 * len(ages) + 100))
 
     fig_bar = px.bar(
-        filtered,
-        x='Age',
-        y='Percentage',
-        color='Entrepreneurship',
-        barmode='stack',
-        color_discrete_map=color_map,
-        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
-        labels={'Age': 'Age', 'Percentage': 'Percentage'},
-        height=400,
-        title=f"{selected_level} Level – Entrepreneurship by Age (%)"
+        data, x='Age', y='Percentage', color='Entrepreneurship', barmode='stack',
+        color_discrete_map=color_map, category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Percentage': 'Percentage'}, height=400, width=chart_width,
+        title=f"{level} Level – Entrepreneurship by Age (%)"
     )
+
     for status in ['No', 'Yes']:
-        for _, row in filtered[filtered['Entrepreneurship'] == status].iterrows():
+        for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
                 y_pos = 0.20 if status == 'No' else 0.90
                 fig_bar.add_annotation(
-                    x=row['Age'],
-                    y=y_pos,
-                    text=f"{row['Percentage']:.0%}",
-                    showarrow=False,
-                    font=dict(color="white", size=font_size),
-                    xanchor="center",
-                    yanchor="middle"
+                    x=row['Age'], y=y_pos, text=f"{row['Percentage']:.0%}",
+                    showarrow=False, font=dict(color="white", size=font_size),
+                    xanchor="center", yanchor="middle"
                 )
+
     fig_bar.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
-        xaxis_tickangle=90,
-        bargap=0.1
+        xaxis_tickangle=90, bargap=0.1
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
     fig_area = px.area(
-        filtered,
-        x='Age',
-        y='Count',
-        color='Entrepreneurship',
-        markers=True,
-        color_discrete_map=color_map,
-        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
-        labels={'Age': 'Age', 'Count': 'Count'},
-        height=400,
-        title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
+        data, x='Age', y='Count', color='Entrepreneurship', markers=True,
+        color_discrete_map=color_map, category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Count': 'Count'}, height=400, width=chart_width,
+        title=f"{level} Level – Entrepreneurship by Age (Count)"
     )
-    for status in ['Yes', 'No']:
-        avg_age = filtered[filtered['Entrepreneurship'] == status]['Age'].mean()
-        fig_area.add_vline(
-            x=avg_age,
-            line_dash="dot",
-            line_color=color_map[status],
-            line_width=1.2,
-        )
-        fig_area.add_trace(go.Scatter(
-            x=[None],
-            y=[None],
-            mode='markers',
-            marker=dict(symbol='circle', size=10, color=color_map[status]),
-            name=f"{status} Avg Age: {avg_age:.1f}"
-        ))
     fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
@@ -108,10 +78,9 @@ else:
     )
     fig_area.update_yaxes(title="Count")
 
-    col_bar, col_area = st.columns([1, 1])
-
-    with col_bar:
+    # Chia cột 50:50, giữ width=chart_width cho cả 2 biểu đồ
+    col1, col2 = st.columns(2)
+    with col1:
         st.plotly_chart(fig_bar, use_container_width=True)
-
-    with col_area:
+    with col2:
         st.plotly_chart(fig_area, use_container_width=True)

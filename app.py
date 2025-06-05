@@ -27,25 +27,28 @@ filtered = df_grouped[
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
-# Font size adjustment
+# Font size based on number of bars
 def get_font_size(n):
     return {1: 20, 2: 18, 3: 16, 4: 14, 5: 12, 6: 11, 7: 10, 8: 9, 9: 8, 10: 7}.get(n, 6)
 
-# Colors and layout
+# Chart colors
 color_map = {'Yes': '#FFD700', 'No': '#004080'}
-ages = sorted(filtered['Age'].unique())
-font_size = get_font_size(len(ages))
-bar_width = max(500, min(1300, 50 * len(ages) + 100))
-area_width = bar_width + 200  # area chart wider
 
+# Page title
 st.title("🚀 Education & Career Success Dashboard")
 
-if filtered.empty:
+data = filtered
+if data.empty:
     st.write(f"### {selected_level} – No data available")
 else:
-    # Stacked Bar Chart
+    ages = sorted(data['Age'].unique())
+    font_size = get_font_size(len(ages))
+    bar_width = max(500, min(1200, 60 * len(ages) + 100))
+    area_width = bar_width + 400  # make area wider than bar
+
+    # Stacked Bar Chart (Percentage)
     fig_bar = px.bar(
-        filtered,
+        data,
         x='Age',
         y='Percentage',
         color='Entrepreneurship',
@@ -59,7 +62,7 @@ else:
     )
 
     for status in ['No', 'Yes']:
-        for _, row in filtered[filtered['Entrepreneurship'] == status].iterrows():
+        for _, row in data[data['Entrepreneurship'] == status].iterrows():
             if row['Percentage'] > 0:
                 y_pos = 0.20 if status == 'No' else 0.90
                 fig_bar.add_annotation(
@@ -80,13 +83,13 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart
+    # Area Chart (Count)
     fig_area = px.area(
-        filtered,
+        data,
         x='Age',
         y='Count',
         color='Entrepreneurship',
-        markers=True,
+        markers=False,  # no dots
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
@@ -95,17 +98,7 @@ else:
         title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
-    # Vertical lines without dummy legends
-    for status in ['Yes', 'No']:
-        avg_age = filtered[filtered['Entrepreneurship'] == status]['Age'].mean()
-        fig_area.add_vline(
-            x=avg_age,
-            line_dash="dot",
-            line_color=color_map[status],
-            line_width=1.2,
-        )
-
-    fig_area.update_traces(line=dict(width=2), marker=dict(size=5))
+    fig_area.update_traces(line=dict(width=2))
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',
@@ -113,9 +106,9 @@ else:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Show side by side
+    # Display side-by-side
     col1, col2 = st.columns(2)
     with col1:
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_bar)
     with col2:
-        st.plotly_chart(fig_area, use_container_width=True)
+        st.plotly_chart(fig_area)

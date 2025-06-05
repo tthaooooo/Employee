@@ -13,15 +13,14 @@ df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Cou
 # Sidebar filters
 st.sidebar.title("Filters")
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
-# Thay multiselect bằng selectbox (dropdown) để chọn 1 level duy nhất
-selected_level = st.sidebar.selectbox("Select Job Level", job_levels, index=0)
+selected_level = st.sidebar.selectbox("Select Job Level", job_levels)  # dropdown chỉ chọn 1 level
 
 min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
 selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Filter data chỉ với 1 level được chọn
+# Filter data
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'] == selected_level) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
@@ -38,15 +37,13 @@ color_map = {'Yes': '#FFD700', 'No': '#004080'}
 # Page title
 st.title("🚀 Education & Career Success Dashboard")
 
-# Nếu không có data
 if filtered.empty:
     st.write(f"### {selected_level} – No data available")
 else:
     ages = sorted(filtered['Age'].unique())
     font_size = get_font_size(len(ages))
-    # Tăng độ rộng cả 2 chart, ví dụ width = 1000
-    chart_width = 1000
-    chart_height = 450
+    chart_width_bar = max(400, min(600, 50 * len(ages) + 100))  # bar chart width max 600
+    chart_width_area = max(900, min(1400, 100 * len(ages) + 200))  # area chart rộng hơn nhiều
 
     # Stacked Bar Chart (Percentage)
     fig_bar = px.bar(
@@ -58,8 +55,8 @@ else:
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
-        height=chart_height,
-        width=chart_width,
+        height=400,
+        width=chart_width_bar,
         title=f"{selected_level} Level – Entrepreneurship by Age (%)"
     )
 
@@ -95,8 +92,8 @@ else:
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
-        height=chart_height,
-        width=chart_width,
+        height=400,
+        width=chart_width_area,
         title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
@@ -126,8 +123,8 @@ else:
     )
     fig_area.update_yaxes(title="Count")
 
-    # Hiển thị 2 chart ngang hàng, rộng hơn
-    col1, col2 = st.columns([1, 1])
+    # Show charts side by side with area chart rộng gấp 3 lần bar chart
+    col1, col2 = st.columns([1, 3])
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:

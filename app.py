@@ -43,8 +43,11 @@ if data.empty:
 else:
     ages = sorted(data['Age'].unique())
     font_size = get_font_size(len(ages))
-    bar_width = max(500, min(1200, 60 * len(ages) + 100))
-    area_width = bar_width + 400  # make area wider than bar
+    
+    # Tăng chiều rộng theo số lượng tuổi
+    chart_base_width = 70  # mỗi cột tuổi ~70px
+    chart_offset = 200     # lề phụ thêm
+    chart_width = chart_base_width * len(ages) + chart_offset
 
     # Stacked Bar Chart (Percentage)
     fig_bar = px.bar(
@@ -57,7 +60,7 @@ else:
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
-        width=bar_width,
+        width=chart_width,
         title=f"{selected_level} Level – Entrepreneurship by Age (%)"
     )
 
@@ -83,22 +86,22 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area Chart (Count)
+    # Area Chart (Count) with markers
     fig_area = px.area(
         data,
         x='Age',
         y='Count',
         color='Entrepreneurship',
-        markers=False,  # no dots
+        markers=True,
         color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,
-        width=area_width,
+        width=chart_width,
         title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
 
-    fig_area.update_traces(line=dict(width=2))
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=5))
     fig_area.update_layout(
         margin=dict(t=40, l=40, r=40, b=40),
         legend_title_text='Entrepreneurship',

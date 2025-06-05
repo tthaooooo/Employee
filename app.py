@@ -105,7 +105,7 @@ for level in visible_levels:
     # Add vertical reference lines – mean age per group + custom legend dots
     for status in ['Yes', 'No']:
         avg_age = data[data['Entrepreneurship'] == status]['Age'].mean()
-        fig_area.add_vline(-
+        fig_area.add_vline(
             x=avg_age,
             line_dash="dot",
             line_color=color_map[status],
@@ -134,6 +134,3 @@ for level in visible_levels:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
         st.plotly_chart(fig_area, use_container_width=True)
-
-
-

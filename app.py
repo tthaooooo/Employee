@@ -8,29 +8,32 @@ df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
 # Sidebar filters
 st.sidebar.title("Filters")
+
 job_levels = sorted(df['Current_Job_Level'].dropna().unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-selected_ent = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
+ent_option = st.sidebar.selectbox("Entrepreneurship Status", ["All", "Yes", "No"])
 
 min_age = int(df['Age'].min())
 max_age = int(df['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
 # Filter data
-df_filtered = df[
-    (df['Current_Job_Level'] == selected_level) &
-    (df['Entrepreneurship'].isin(selected_ent)) &
-    (df['Age'].between(age_range[0], age_range[1]))
-]
+df_filtered = df[df['Current_Job_Level'] == selected_level]
+df_filtered = df_filtered[df_filtered['Age'].between(age_range[0], age_range[1])]
 
+if ent_option != "All":
+    df_filtered = df_filtered[df_filtered['Entrepreneurship'] == ent_option]
+
+# Title
 st.title("Entrepreneurship + Gender Analysis")
-st.markdown(f"### Job Level: **{selected_level}**, Status: **{', '.join(selected_ent)}**")
+st.markdown(f"### Job Level: **{selected_level}**, Status: **{ent_option}**")
 
+# Check if data is empty
 if df_filtered.empty:
     st.warning("No data available for selected filters.")
 else:
-    # Donut Chart (default color)
+    # Donut Chart (Gender distribution)
     pie_data = df_filtered['Gender'].value_counts().reset_index()
     pie_data.columns = ['Gender', 'Count']
     fig_donut = px.pie(
@@ -41,7 +44,7 @@ else:
         title="Gender Distribution (Donut)"
     )
 
-    # Grouped Bar Chart (default color)
+    # Bar Chart (Age distribution by gender)
     bar_data = df_filtered.groupby(['Age', 'Gender']).size().reset_index(name='Count')
     fig_bar = px.bar(
         bar_data,
@@ -54,7 +57,7 @@ else:
     )
     fig_bar.update_layout(xaxis_tickangle=45)
 
-    # Display charts side-by-side
+    # Show charts side by side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_donut, use_container_width=True)

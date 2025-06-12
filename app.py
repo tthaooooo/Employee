@@ -27,7 +27,6 @@ if ent_option != "All":
 
 # Title
 st.title("Entrepreneurship + Gender Analysis")
-st.markdown(f"### Job Level: **{selected_level}**, Status: **{ent_option}**")
 
 # Check if data is empty
 if df_filtered.empty:
@@ -44,22 +43,20 @@ else:
         title="Gender Distribution (Donut)"
     )
 
-    # Bar Chart (Age distribution by gender)
-    bar_data = df_filtered.groupby(['Age', 'Gender']).size().reset_index(name='Count')
-    fig_bar = px.bar(
-        bar_data,
-        x='Age',
-        y='Count',
-        color='Gender',
-        barmode='group',
-        title="Age Distribution by Gender",
-        labels={'Count': 'Number of People'}
+    # Density Curve (Age distribution by Gender)
+    fig_density = px.violin(
+        df_filtered,
+        x="Gender",
+        y="Age",
+        color="Gender",
+        box=True,
+        points="all",
+        title="Age Distribution by Gender (Violin Plot)"
     )
-    fig_bar.update_layout(xaxis_tickangle=45)
 
     # Show charts side by side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_donut, use_container_width=True)
     with col2:
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_density, use_container_width=True)

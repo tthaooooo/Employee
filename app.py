@@ -53,15 +53,16 @@ else:
                     y=y_vals,
                     mode='lines',
                     name=gender,
-                    fill='tozeroy'  # Tạo area chart
+                    fill='tozeroy'
                 ))
 
         fig_density.update_layout(
             title="Age Distribution by Gender (Area Chart)",
             xaxis_title="Age",
             yaxis_title="Density",
-            height=500,
-            margin=dict(t=40, l=40, r=40, b=40)
+            autosize=True,
+            height=None,  # Để Streamlit tự tính chiều cao
+            margin=dict(t=40, l=40, r=40, b=40),
         )
         st.plotly_chart(fig_density, use_container_width=True)
 
@@ -72,12 +73,13 @@ else:
         fig_donut = go.Figure(data=[go.Pie(
             labels=gender_counts['Gender'],
             values=gender_counts['Count'],
-            hole=0.5  # Donut style
+            hole=0.5
         )])
 
         fig_donut.update_layout(
             title="Gender Distribution (Donut Chart)",
-            height=500,
+            autosize=True,
+            height=None,
             margin=dict(t=40, l=40, r=40, b=40),
             showlegend=True
         )

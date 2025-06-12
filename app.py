@@ -11,26 +11,26 @@ st.sidebar.title("Filters")
 job_levels = sorted(df['Current_Job_Level'].dropna().unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-ent_option = st.sidebar.selectbox("Entrepreneurship Status", ["Yes", "No"])
+selected_ent = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
 min_age = int(df['Age'].min())
 max_age = int(df['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Filter base on selections
+# Filter data
 df_filtered = df[
     (df['Current_Job_Level'] == selected_level) &
-    (df['Entrepreneurship'] == ent_option) &
+    (df['Entrepreneurship'].isin(selected_ent)) &
     (df['Age'].between(age_range[0], age_range[1]))
 ]
 
 st.title("Entrepreneurship + Gender Analysis")
-st.markdown(f"### Job Level: **{selected_level}**, Status: **{ent_option}**")
+st.markdown(f"### Job Level: **{selected_level}**, Status: **{', '.join(selected_ent)}**")
 
 if df_filtered.empty:
     st.warning("No data available for selected filters.")
 else:
-    # Donut Chart: Gender Distribution
+    # Donut Chart (default color)
     pie_data = df_filtered['Gender'].value_counts().reset_index()
     pie_data.columns = ['Gender', 'Count']
     fig_donut = px.pie(
@@ -38,11 +38,10 @@ else:
         names='Gender',
         values='Count',
         hole=0.5,
-        title="Gender Distribution (Donut)",
-        color_discrete_sequence=px.colors.qualitative.Set2
+        title="Gender Distribution (Donut)"
     )
 
-    # Grouped Bar Chart: Age vs Gender
+    # Grouped Bar Chart (default color)
     bar_data = df_filtered.groupby(['Age', 'Gender']).size().reset_index(name='Count')
     fig_bar = px.bar(
         bar_data,
@@ -51,12 +50,11 @@ else:
         color='Gender',
         barmode='group',
         title="Age Distribution by Gender",
-        labels={'Count': 'Number of People'},
-        color_discrete_sequence=px.colors.qualitative.Set2
+        labels={'Count': 'Number of People'}
     )
     fig_bar.update_layout(xaxis_tickangle=45)
 
-    # Display charts side by side
+    # Display charts side-by-side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_donut, use_container_width=True)

@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from scipy.stats import gaussian_kde
 import numpy as np
+import plotly.express as px
 
 # Load and preprocess data
 df = pd.read_csv("education_career_success.csv")
@@ -32,32 +33,46 @@ if selected_status != 'All':
 
 # Check if enough data exists
 if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
-    st.write("Not enough data to display density curves.")
+    st.write("Not enough data to display charts.")
 else:
-    # Prepare figure
-    fig = go.Figure()
-    genders = filtered_df['Gender'].unique()
+    col1, col2 = st.columns(2)
 
-    for gender in genders:
-        gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
-        if len(gender_ages) > 1:
-            kde = gaussian_kde(gender_ages)
-            x_vals = np.linspace(age_range[0], age_range[1], 100)
-            y_vals = kde(x_vals)
+    # === Density Curve ===
+    with col1:
+        fig_density = go.Figure()
+        genders = filtered_df['Gender'].unique()
 
-            fig.add_trace(go.Scatter(
-                x=x_vals,
-                y=y_vals,
-                mode='lines',
-                name=gender
-            ))
+        for gender in genders:
+            gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
+            if len(gender_ages) > 1:
+                kde = gaussian_kde(gender_ages)
+                x_vals = np.linspace(age_range[0], age_range[1], 100)
+                y_vals = kde(x_vals)
 
-    fig.update_layout(
-        title="Density Curve of Age by Gender",
-        xaxis_title="Age",
-        yaxis_title="Density",
-        height=500,
-        margin=dict(t=40, l=40, r=40, b=40)
-    )
+                fig_density.add_trace(go.Scatter(
+                    x=x_vals,
+                    y=y_vals,
+                    mode='lines',
+                    name=gender
+                ))
 
-    st.plotly_chart(fig, use_container_width=True)
+        fig_density.update_layout(
+            title="Density Curve of Age by Gender",
+            xaxis_title="Age",
+            yaxis_title="Density",
+            height=500,
+            margin=dict(t=40, l=40, r=40, b=40)
+        )
+        st.plotly_chart(fig_density, use_container_width=True)
+
+    # === Donut Chart ===
+    with col2:
+        donut_data = filtered_df.groupby('Gender').size().reset_index(name='Count')
+        fig_donut = px.pie(
+            donut_data,
+            values='Count',
+            names='Gender',
+            hole=0.5,
+            title="Gender Distribution"
+        )
+        st.plotly_chart(fig_donut, use_container_width=True)

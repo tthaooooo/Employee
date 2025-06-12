@@ -3,21 +3,21 @@ import pandas as pd
 import plotly.express as px
 
 # Load and preprocess data
-st.set_page_config(page_title="Entrepreneurship by Age & Gender", layout="wide")
-st.title("📊 Entrepreneurship Trends by Age and Gender")
-st.markdown("Explore how entrepreneurship varies across age groups and job levels.")
-
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
 # Sidebar filters
+st.set_page_config(page_title="Entrepreneurship by Age & Gender", layout="wide")
+st.title("📊 Entrepreneurship Trends by Age and Gender")
+st.markdown("Explore how entrepreneurship varies across age groups and job levels.")
+
 st.sidebar.title("Filters")
 
 # Gender filter
 genders = sorted(df['Gender'].dropna().unique())
 selected_genders = st.sidebar.multiselect("Select Gender", genders, default=genders)
 
-# Filter data based on selected genders
+# Filter data based on selected genders first
 df = df[df['Gender'].isin(selected_genders)]
 
 # Group and calculate percentage
@@ -46,14 +46,13 @@ filtered = df_grouped[
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
-# Custom color map
-color_map = {'Yes': '#FF4136', 'No': '#0074D9'}
+color_map = {'Yes': '#FFD700', 'No': '#004080'}
 
 if filtered.empty:
     st.write(f"### No data available for {selected_level} level.")
 else:
     ages = sorted(filtered['Age'].unique())
-
+    
     # Bar chart: Percentage
     fig_bar = px.bar(
         filtered,
@@ -101,3 +100,6 @@ else:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
         st.plotly_chart(fig_area, use_container_width=True)
+
+
+

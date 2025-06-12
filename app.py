@@ -2,64 +2,121 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Load data
+# Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
 # Sidebar filters
 st.sidebar.title("Filters")
 
-job_levels = sorted(df['Current_Job_Level'].dropna().unique())
-selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
+# Gender filter
+genders = sorted(df['Gender'].dropna().unique())
+selected_genders = st.sidebar.multiselect("Select Gender", genders, default=genders)
 
-ent_option = st.sidebar.selectbox("Entrepreneurship Status", ["All", "Yes", "No"])
+# Filter data based on selected genders first
+df = df[df['Gender'].isin(selected_genders)]
 
-min_age = int(df['Age'].min())
-max_age = int(df['Age'].max())
+# Continue processing
+df_grouped = (
+    df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship'])
+      .size()
+      .reset_index(name='Count')
+)
+df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
+
+# Job level filter
+job_levels = sorted(df_grouped['Current_Job_Level'].unique())
+selected_level = st.sidebar.selectbox("Select Job Level (Bar/Area Charts)", job_levels)
+
+# Age filter
+min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Filter data
-df_filtered = df[df['Current_Job_Level'] == selected_level]
-df_filtered = df_filtered[df_filtered['Age'].between(age_range[0], age_range[1])]
+# Entrepreneurship filter
+selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-if ent_option != "All":
-    df_filtered = df_filtered[df_filtered['Entrepreneurship'] == ent_option]
+# Final filtered dataset
+filtered = df_grouped[
+    (df_grouped['Current_Job_Level'] == selected_level) &
+    (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
+    (df_grouped['Age'].between(age_range[0], age_range[1]))
+]
 
-# Title
-st.title("Entrepreneurship + Gender Analysis")
-st.markdown(f"### Job Level: **{selected_level}**, Status: **{ent_option}**")
+def font_size_by_count(n):
+    return {1: 20, 2: 18, 3: 16, 4: 14, 5: 12, 6: 11, 7: 10, 8: 9, 9: 8, 10: 7}.get(n, 6)
 
-# Check if data is empty
-if df_filtered.empty:
-    st.warning("No data available for selected filters.")
+color_map = {'Yes': '#FFD700', 'No': '#004080'}
+
+if filtered.empty:
+    st.write(f"### No data available for {selected_level} level.")
 else:
-    # Donut Chart (Gender distribution)
-    pie_data = df_filtered['Gender'].value_counts().reset_index()
-    pie_data.columns = ['Gender', 'Count']
-    fig_donut = px.pie(
-        pie_data,
-        names='Gender',
-        values='Count',
-        hole=0.5,
-        title="Gender Distribution (Donut)"
+    ages = sorted(filtered['Age'].unique())
+    font_size = font_size_by_count(len(ages))
+    chart_width = max(400, min(1200, 50 * len(ages) + 100))
+
+    # Bar chart: Percentage
+    fig_bar = px.bar(
+        filtered,
+        x='Age',
+        y='Percentage',
+        color='Entrepreneurship',
+        barmode='stack',
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Percentage': 'Percentage'},
+        height=400,
+        width=chart_width,
+        title=f"{selected_level} Level – Entrepreneurship by Age (%)"
     )
 
-    # Bar Chart (Age distribution by gender)
-    bar_data = df_filtered.groupby(['Age', 'Gender']).size().reset_index(name='Count')
-    fig_bar = px.bar(
-        bar_data,
+    for status in ['No', 'Yes']:
+        for _, row in filtered[filtered['Entrepreneurship'] == status].iterrows():
+            if row['Percentage'] > 0:
+                y_pos = 0.2 if status == 'No' else 0.9
+                fig_bar.add_annotation(
+                    x=row['Age'],
+                    y=y_pos,
+                    text=f"{row['Percentage']:.0%}",
+                    showarrow=False,
+                    font=dict(color="white", size=font_size),
+                    xanchor="center",
+                    yanchor="middle"
+                )
+
+    fig_bar.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90,
+        bargap=0.1
+    )
+    fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
+
+    # Area chart: Count
+    fig_area = px.area(
+        filtered,
         x='Age',
         y='Count',
-        color='Gender',
-        barmode='group',
-        title="Age Distribution by Gender",
-        labels={'Count': 'Number of People'}
+        color='Entrepreneurship',
+        markers=True,
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Count': 'Count'},
+        height=400,
+        width=chart_width,
+        title=f"{selected_level} Level – Entrepreneurship by Age (Count)"
     )
-    fig_bar.update_layout(xaxis_tickangle=45)
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=8))
+    fig_area.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90
+    )
+    fig_area.update_yaxes(title="Count")
 
-    # Show charts side by side
     col1, col2 = st.columns(2)
     with col1:
-        st.plotly_chart(fig_donut, use_container_width=True)
-    with col2:
         st.plotly_chart(fig_bar, use_container_width=True)
+    with col2:
+        st.plotly_chart(fig_area, use_container_width=True)
+
+

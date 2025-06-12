@@ -11,27 +11,28 @@ st.sidebar.title("Filters")
 job_levels = sorted(df['Current_Job_Level'].dropna().unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-ent_statuses = ['Yes', 'No']
-selected_ent = st.sidebar.selectbox("Select Entrepreneurship Status", ent_statuses)
+ent_option = st.sidebar.selectbox("Entrepreneurship Status", ["All", "Yes", "No"])
 
 min_age = int(df['Age'].min())
 max_age = int(df['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Filter based on all selections
+# Filter base on selections
 df_filtered = df[
     (df['Current_Job_Level'] == selected_level) &
-    (df['Entrepreneurship'] == selected_ent) &
     (df['Age'].between(age_range[0], age_range[1]))
 ]
 
+if ent_option != "All":
+    df_filtered = df_filtered[df_filtered['Entrepreneurship'] == ent_option]
+
 st.title("Entrepreneurship + Gender Analysis")
-st.markdown(f"### Job Level: **{selected_level}**, Status: **{selected_ent}**")
+st.markdown(f"### Job Level: **{selected_level}**, Status: **{ent_option}**")
 
 if df_filtered.empty:
     st.warning("No data available for selected filters.")
 else:
-    # Donut chart
+    # Donut Chart
     pie_data = df_filtered['Gender'].value_counts().reset_index()
     pie_data.columns = ['Gender', 'Count']
     fig_donut = px.pie(
@@ -43,7 +44,7 @@ else:
         color_discrete_sequence=px.colors.qualitative.Set2
     )
 
-    # Bar chart: Age x Gender
+    # Bar Chart (or other chart) — Age vs Gender
     bar_data = df_filtered.groupby(['Age', 'Gender']).size().reset_index(name='Count')
     fig_bar = px.bar(
         bar_data,
@@ -57,7 +58,7 @@ else:
     )
     fig_bar.update_layout(xaxis_tickangle=45)
 
-    # Show side by side
+    # Display side by side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_donut, use_container_width=True)

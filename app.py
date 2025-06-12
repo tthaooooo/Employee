@@ -4,13 +4,6 @@ import plotly.graph_objects as go
 from scipy.stats import gaussian_kde
 import numpy as np
 
-# Set page layout
-st.set_page_config(page_title="Gender & Age Insights", layout="wide")
-
-# Title & description
-st.title("🎯 Gender & Age Insights")
-st.markdown("Analyze age distribution and gender proportions by job level and entrepreneurship status.")
-
 # Load and preprocess data
 df = pd.read_csv("education_career_success.csv")
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
@@ -39,20 +32,20 @@ if selected_status != 'All':
 
 # Check if enough data exists
 if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
-    st.warning("Not enough data to display charts.")
+    st.write("Not enough data to display charts.")
 else:
     col1, col2 = st.columns(2)
 
-    # Area Chart (with color + transparency)
+    # Area Chart (was density curve)
     with col1:
         fig_density = go.Figure()
         genders = filtered_df['Gender'].unique()
 
-        # Define color map with transparency
+        # Màu vàng nhạt + độ trong suốt
         color_map = {
-            'Male': 'rgba(0, 102, 204, 0.3)',       # Xanh dương nhạt trong suốt
-            'Female': 'rgba(255, 204, 0, 0.3)',     # Vàng nhạt trong suốt
-            'Other': 'rgba(255, 99, 132, 0.3)'      # Đỏ hồng nhạt
+            'Male': 'rgba(255, 221, 87, 0.4)',     # vàng nhạt
+            'Female': 'rgba(255, 183, 3, 0.4)',    # cam vàng nhạt
+            'Other': 'rgba(255, 229, 180, 0.4)'    # be vàng nhạt
         }
 
         for gender in genders:
@@ -68,8 +61,8 @@ else:
                     mode='lines',
                     name=gender,
                     fill='tozeroy',
-                    line=dict(color=color_map.get(gender, 'gray'), width=2),
-                    fillcolor=color_map.get(gender, 'gray'),
+                    fillcolor=color_map.get(gender, 'rgba(200,200,200,0.3)'),
+                    line=dict(color=color_map.get(gender, 'rgba(150,150,150,1)'), width=2)
                 ))
 
         fig_density.update_layout(
@@ -88,7 +81,7 @@ else:
         fig_donut = go.Figure(data=[go.Pie(
             labels=gender_counts['Gender'],
             values=gender_counts['Count'],
-            hole=0.5
+            hole=0.5  # Donut style
         )])
 
         fig_donut.update_layout(

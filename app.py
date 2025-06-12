@@ -46,18 +46,22 @@ filtered = df_grouped[
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
+# Custom color map
+color_map = {'Yes': '#FF4136', 'No': '#0074D9'}
+
 if filtered.empty:
     st.write(f"### No data available for {selected_level} level.")
 else:
     ages = sorted(filtered['Age'].unique())
 
-    # Bar chart: Percentage (default color, no annotations)
+    # Bar chart: Percentage
     fig_bar = px.bar(
         filtered,
         x='Age',
         y='Percentage',
         color='Entrepreneurship',
         barmode='stack',
+        color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
@@ -71,13 +75,14 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area chart: Count (default color)
+    # Area chart: Count
     fig_area = px.area(
         filtered,
         x='Age',
         y='Count',
         color='Entrepreneurship',
         markers=True,
+        color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,
@@ -95,4 +100,3 @@ else:
     with col1:
         st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
-        st.plotly_chart(fig_area, use_container_width=True)

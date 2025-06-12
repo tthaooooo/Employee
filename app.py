@@ -1,86 +1,102 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
-from scipy.stats import gaussian_kde
-import numpy as np
-
-# Set page layout
-st.set_page_config(page_title="Gender & Age Insights", layout="wide")
-
-# Title & description
-st.title("🎯 Gender & Age Insights")
-st.markdown("Analyze age distribution and gender proportions by job level and entrepreneurship status.")
 
 # Load and preprocess data
-df = pd.read_csv("education_career_success.csv")
+df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
 # Sidebar filters
+st.set_page_config(page_title="Entrepreneurship by Age & Gender", layout="wide")
+st.title("📊 Entrepreneurship Trends by Age and Gender")
+st.markdown("Explore how entrepreneurship varies across age groups and job levels.")
+
 st.sidebar.title("Filters")
 
-job_levels = sorted(df['Current_Job_Level'].dropna().unique())
+# Gender filter
+genders = sorted(df['Gender'].dropna().unique())
+selected_genders = st.sidebar.multiselect("Select Gender", genders, default=genders)
+
+# Filter data based on selected genders first
+df = df[df['Gender'].isin(selected_genders)]
+
+# Group and calculate percentage
+df_grouped = (
+    df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship'])
+      .size()
+      .reset_index(name='Count')
+)
+df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
+
+# Job level filter
+job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-min_age, max_age = int(df['Age'].min()), int(df['Age'].max())
+# Age filter
+min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-status_options = ['All', 'Yes', 'No']
-selected_status = st.sidebar.selectbox("Select Entrepreneurship Status", status_options)
+# Entrepreneurship filter
+selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Apply filters
-filtered_df = df[df['Current_Job_Level'] == selected_level]
-filtered_df = filtered_df[filtered_df['Age'].between(age_range[0], age_range[1])]
+# Final filtered dataset
+filtered = df_grouped[
+    (df_grouped['Current_Job_Level'] == selected_level) &
+    (df_grouped['Entrepreneurship'].isin(selected_statuses)) &
+    (df_grouped['Age'].between(age_range[0], age_range[1]))
+]
 
-if selected_status != 'All':
-    filtered_df = filtered_df[filtered_df['Entrepreneurship'] == selected_status]
+color_map = {'Yes': '#FFD700', 'No': '#004080'}
 
-# Display charts
-if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
-    st.warning("Not enough data to display charts.")
+if filtered.empty:
+    st.write(f"### No data available for {selected_level} level.")
 else:
-    col1, col2 = st.columns([1, 1])
+    ages = sorted(filtered['Age'].unique())
+    
+    # Bar chart: Percentage
+    fig_bar = px.bar(
+        filtered,
+        x='Age',
+        y='Percentage',
+        color='Entrepreneurship',
+        barmode='stack',
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Percentage': 'Percentage'},
+        height=400,
+        title=f"{selected_level} – Entrepreneurship by Age (%)"
+    )
+    fig_bar.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90,
+        bargap=0.1
+    )
+    fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Density Curve
+    # Area chart: Count
+    fig_area = px.area(
+        filtered,
+        x='Age',
+        y='Count',
+        color='Entrepreneurship',
+        markers=True,
+        color_discrete_map=color_map,
+        category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
+        labels={'Age': 'Age', 'Count': 'Count'},
+        height=400,
+        title=f"{selected_level} – Entrepreneurship by Age (Count)"
+    )
+    fig_area.update_traces(line=dict(width=2), marker=dict(size=6))
+    fig_area.update_layout(
+        margin=dict(t=40, l=40, r=40, b=40),
+        legend_title_text='Entrepreneurship',
+        xaxis_tickangle=90
+    )
+    fig_area.update_yaxes(title="Count")
+
+    col1, col2 = st.columns(2)
     with col1:
-        fig_density = go.Figure()
-        genders = filtered_df['Gender'].unique()
-
-        for gender in genders:
-            gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
-            if len(gender_ages) > 1:
-                kde = gaussian_kde(gender_ages)
-                x_vals = np.linspace(age_range[0], age_range[1], 100)
-                y_vals = kde(x_vals)
-
-                fig_density.add_trace(go.Scatter(
-                    x=x_vals,
-                    y=y_vals,
-                    mode='lines',
-                    name=gender
-                ))
-
-        fig_density.update_layout(
-            title="Age Distribution by Gender",
-            xaxis_title="Age",
-            yaxis_title="Density",
-            height=500,
-            margin=dict(t=40, l=40, r=40, b=40)
-        )
-        st.plotly_chart(fig_density, use_container_width=True)
-
-    # Donut Chart
+        st.plotly_chart(fig_bar, use_container_width=True)
     with col2:
-        donut_data = filtered_df.groupby('Gender').size().reset_index(name='Count')
-        fig_donut = px.pie(
-            donut_data,
-            values='Count',
-            names='Gender',
-            hole=0.5,
-            title="Gender Proportion"
-        )
-        fig_donut.update_layout(
-            height=500,
-            margin=dict(t=40, l=40, r=40, b=40)
-        )
-        st.plotly_chart(fig_donut, use_container_width=True)
+        st.plotly_chart(fig_area, use_container_width=True)

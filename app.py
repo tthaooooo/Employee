@@ -2,35 +2,49 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Load and preprocess data
+# Load data
 df = pd.read_csv('education_career_success.csv')
-df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
-df = df[df['Gender'].notna()]  # loại bỏ dòng thiếu giới tính nếu có
 
-# Sidebar filter for Job Level
+# Kiểm tra cột bắt buộc
+required_columns = ['Current_Job_Level', 'Gender', 'Entrepreneurship']
+if not all(col in df.columns for col in required_columns):
+    st.error("Dataset missing required columns!")
+    st.stop()
+
+# Drop missing data ở các cột cần dùng
+df = df.dropna(subset=required_columns)
+
+# Chỉ lấy các giá trị cần cho biểu đồ
+df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
+
+# Sidebar: chọn Job Level
 st.sidebar.title("Filters")
-job_levels = sorted(df['Current_Job_Level'].dropna().unique())
+job_levels = sorted(df['Current_Job_Level'].unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-# Filter theo Job Level
+# Lọc theo Job Level
 df_filtered = df[df['Current_Job_Level'] == selected_level]
 
-# Tính số lượng theo Entrepreneurship + Gender
-pie_df = df_filtered.groupby(['Entrepreneurship', 'Gender']).size().reset_index(name='Count')
+# Kiểm tra nếu không có dữ liệu
+if df_filtered.empty:
+    st.warning(f"No data available for job level: {selected_level}")
+    st.stop()
 
-# Vẽ biểu đồ tròn
-fig_pie = px.pie(
-    pie_df,
+# Gom nhóm theo Entrepreneurship + Gender
+pie_data = df_filtered.groupby(['Entrepreneurship', 'Gender']).size().reset_index(name='Count')
+
+# Vẽ pie chart
+fig = px.pie(
+    pie_data,
     names='Entrepreneurship',
     values='Count',
     color='Entrepreneurship',
-    title=f"Entrepreneurship Distribution by Gender – {selected_level} Level",
+    title=f"Entrepreneurship by Gender – {selected_level} Level",
     hole=0.4,
-    color_discrete_map={'Yes': '#FFD700', 'No': '#004080'},
+    color_discrete_map={'Yes': '#FFD700', 'No': '#004080'}
 )
 
-# Phân tách thêm bằng legend Gender (optional)
-fig_pie.update_traces(textinfo='percent+label', pull=[0.05 if e == 'Yes' else 0 for e in pie_df['Entrepreneurship']])
+fig.update_traces(textinfo='percent+label')
 
 # Hiển thị biểu đồ
-st.plotly_chart(fig_pie, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)

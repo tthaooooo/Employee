@@ -6,51 +6,60 @@ import plotly.express as px
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Sidebar
+# Sidebar filters
 st.sidebar.title("Filters")
 job_levels = sorted(df['Current_Job_Level'].dropna().unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-# Filter theo Job Level
-subset = df[df['Current_Job_Level'] == selected_level]
+ent_statuses = ['Yes', 'No']
+selected_ent = st.sidebar.selectbox("Select Entrepreneurship Status", ent_statuses)
 
-if subset.empty:
-    st.warning(f"No data available for job level: {selected_level}")
+min_age = int(df['Age'].min())
+max_age = int(df['Age'].max())
+age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
+
+# Filter based on all selections
+df_filtered = df[
+    (df['Current_Job_Level'] == selected_level) &
+    (df['Entrepreneurship'] == selected_ent) &
+    (df['Age'].between(age_range[0], age_range[1]))
+]
+
+st.title("Entrepreneurship + Gender Analysis")
+st.markdown(f"### Job Level: **{selected_level}**, Status: **{selected_ent}**")
+
+if df_filtered.empty:
+    st.warning("No data available for selected filters.")
 else:
-    for ent_status in ['Yes', 'No']:
-        st.markdown(f"## Entrepreneurship: **{ent_status}**")
+    # Donut chart
+    pie_data = df_filtered['Gender'].value_counts().reset_index()
+    pie_data.columns = ['Gender', 'Count']
+    fig_donut = px.pie(
+        pie_data,
+        names='Gender',
+        values='Count',
+        hole=0.5,
+        title="Gender Distribution (Donut)",
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
 
-        df_ent = subset[subset['Entrepreneurship'] == ent_status]
+    # Bar chart: Age x Gender
+    bar_data = df_filtered.groupby(['Age', 'Gender']).size().reset_index(name='Count')
+    fig_bar = px.bar(
+        bar_data,
+        x='Age',
+        y='Count',
+        color='Gender',
+        barmode='group',
+        title="Age Distribution by Gender",
+        labels={'Count': 'Number of People'},
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
+    fig_bar.update_layout(xaxis_tickangle=45)
 
-        if df_ent.empty:
-            st.info("No data for this group.")
-            continue
-
-        # Pie Chart: Gender Distribution
-        pie_data = df_ent['Gender'].value_counts().reset_index()
-        pie_data.columns = ['Gender', 'Count']
-        fig_pie = px.pie(
-            pie_data,
-            names='Gender',
-            values='Count',
-            title="Gender Distribution",
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-
-        # Grouped Bar Chart: Age Distribution by Gender
-        bar_data = df_ent.groupby(['Age', 'Gender']).size().reset_index(name='Count')
-        fig_bar = px.bar(
-            bar_data,
-            x='Age',
-            y='Count',
-            color='Gender',
-            barmode='group',
-            title="Age Distribution by Gender",
-            labels={'Count': 'Number of People'}
-        )
-        fig_bar.update_layout(xaxis_tickangle=45)
-
-        # Hiển thị song song
-        col1, col2 = st.columns(2)
-        col1.plotly_chart(fig_pie, use_container_width=True)
-        col2.plotly_chart(fig_bar, use_container_width=True)
+    # Show side by side
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(fig_donut, use_container_width=True)
+    with col2:
+        st.plotly_chart(fig_bar, use_container_width=True)

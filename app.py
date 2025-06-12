@@ -25,14 +25,12 @@ df_filtered = df_filtered[df_filtered['Age'].between(age_range[0], age_range[1])
 if ent_option != "All":
     df_filtered = df_filtered[df_filtered['Entrepreneurship'] == ent_option]
 
-# Title
 st.title("Entrepreneurship + Gender Analysis")
 
-# Check if data is empty
 if df_filtered.empty:
     st.warning("No data available for selected filters.")
 else:
-    # Donut Chart (Gender distribution)
+    # Donut Chart
     pie_data = df_filtered['Gender'].value_counts().reset_index()
     pie_data.columns = ['Gender', 'Count']
     fig_donut = px.pie(
@@ -43,20 +41,18 @@ else:
         title="Gender Distribution (Donut)"
     )
 
-    # Density Curve (Age distribution by Gender)
-    fig_density = px.violin(
+    # KDE Line Chart using density estimate
+    fig_kde = px.density_contour(
         df_filtered,
-        x="Gender",
-        y="Age",
+        x="Age",
         color="Gender",
-        box=True,
-        points="all",
-        title="Age Distribution by Gender (Violin Plot)"
+        marginal="histogram",
+        title="Age Distribution by Gender (Density Contour)"
     )
 
-    # Show charts side by side
+    # Display charts side by side
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_donut, use_container_width=True)
     with col2:
-        st.plotly_chart(fig_density, use_container_width=True)
+        st.plotly_chart(fig_kde, use_container_width=True)

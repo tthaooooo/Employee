@@ -41,33 +41,48 @@ if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
 else:
     col1, col2 = st.columns([1, 1])
 
-    # Density Curve
+    # Histogram + Density Curve
     with col1:
-        fig_density = go.Figure()
+        fig_combined = go.Figure()
         genders = filtered_df['Gender'].unique()
+        colors = {'Male': 'blue', 'Female': 'red'}
 
         for gender in genders:
-            gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
+            gender_data = filtered_df[filtered_df['Gender'] == gender]
+            gender_ages = gender_data['Age']
+            
+            # Histogram
+            fig_combined.add_trace(go.Histogram(
+                x=gender_ages,
+                name=f"{gender} (hist)",
+                opacity=0.5,
+                marker_color=colors.get(gender, None),
+                nbinsx=20
+            ))
+
+            # Density curve
             if len(gender_ages) > 1:
                 kde = gaussian_kde(gender_ages)
-                x_vals = np.linspace(age_range[0], age_range[1], 100)
+                x_vals = np.linspace(age_range[0], age_range[1], 200)
                 y_vals = kde(x_vals)
-
-                fig_density.add_trace(go.Scatter(
+                fig_combined.add_trace(go.Scatter(
                     x=x_vals,
                     y=y_vals,
                     mode='lines',
-                    name=gender
+                    name=f"{gender} (kde)",
+                    line=dict(color=colors.get(gender, None), width=2)
                 ))
 
-        fig_density.update_layout(
-            title="Age Distribution by Gender",
+        fig_combined.update_layout(
+            title="Age Distribution by Gender (Histogram + Curve)",
             xaxis_title="Age",
-            yaxis_title="Density",
+            yaxis_title="Frequency / Density",
+            barmode='overlay',
             height=500,
             margin=dict(t=40, l=40, r=40, b=40)
         )
-        st.plotly_chart(fig_density, use_container_width=True)
+        fig_combined.update_traces(opacity=0.6)
+        st.plotly_chart(fig_combined, use_container_width=True)
 
     # Donut Chart
     with col2:
@@ -84,5 +99,3 @@ else:
             margin=dict(t=40, l=40, r=40, b=40)
         )
         st.plotly_chart(fig_donut, use_container_width=True)
-
-

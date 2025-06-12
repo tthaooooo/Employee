@@ -2,35 +2,38 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Load data
+# Load and filter data
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Sidebar filters
+# Sidebar
 st.sidebar.title("Filters")
 
 job_levels = sorted(df['Current_Job_Level'].dropna().unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-ent_option = st.sidebar.selectbox("Entrepreneurship Status", ["All", "Yes", "No"])
+ent_status = st.sidebar.selectbox("Entrepreneurship Status", ["All", "Yes", "No"])
 
 min_age = int(df['Age'].min())
 max_age = int(df['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Filter data
-df_filtered = df[df['Current_Job_Level'] == selected_level]
-df_filtered = df_filtered[df_filtered['Age'].between(age_range[0], age_range[1])]
+# Filter
+df_filtered = df[
+    (df['Current_Job_Level'] == selected_level) &
+    (df['Age'].between(age_range[0], age_range[1]))
+]
 
-if ent_option != "All":
-    df_filtered = df_filtered[df_filtered['Entrepreneurship'] == ent_option]
+if ent_status != "All":
+    df_filtered = df_filtered[df_filtered['Entrepreneurship'] == ent_status]
 
-st.title("Entrepreneurship + Gender Analysis")
-
+# Check empty
 if df_filtered.empty:
     st.warning("No data available for selected filters.")
 else:
-    # Donut Chart
+    st.title("Gender Distribution & Age Density by Job Level")
+
+    # Donut chart
     pie_data = df_filtered['Gender'].value_counts().reset_index()
     pie_data.columns = ['Gender', 'Count']
     fig_donut = px.pie(
@@ -38,21 +41,23 @@ else:
         names='Gender',
         values='Count',
         hole=0.5,
-        title="Gender Distribution (Donut)"
+        title="Gender Distribution"
     )
 
-    # KDE Line Chart using density estimate
-    fig_kde = px.density_contour(
+    # Density chart (Age vs Gender)
+    fig_density = px.violin(
         df_filtered,
-        x="Age",
+        x="Gender",
+        y="Age",
         color="Gender",
-        marginal="histogram",
-        title="Age Distribution by Gender (Density Contour)"
+        box=True,
+        points="all",
+        title="Age Distribution by Gender (Violin Density)",
     )
 
-    # Display charts side by side
+    # Layout
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig_donut, use_container_width=True)
     with col2:
-        st.plotly_chart(fig_kde, use_container_width=True)
+        st.plotly_chart(fig_density, use_container_width=True)

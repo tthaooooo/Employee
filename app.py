@@ -1,77 +1,63 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.graph_objects as go
 from scipy.stats import gaussian_kde
+import numpy as np
 
-# Load data
-df = pd.read_csv('education_career_success.csv')
-df = df.dropna(subset=['Age', 'Gender', 'Entrepreneurship', 'Current_Job_Level'])
+# Load and preprocess data
+df = pd.read_csv("education_career_success.csv")
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
 # Sidebar filters
 st.sidebar.title("Filters")
 
-job_levels = sorted(df['Current_Job_Level'].unique())
+# Dropdown Job Level
+job_levels = sorted(df['Current_Job_Level'].dropna().unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-status_option = st.sidebar.selectbox("Entrepreneurship Status", ["All", "Yes", "No"])
-
+# Age range slider
 min_age, max_age = int(df['Age'].min()), int(df['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
-# Filter dataset
-df_filtered = df[
-    (df['Current_Job_Level'] == selected_level) &
-    (df['Age'].between(age_range[0], age_range[1]))
-]
+# Dropdown for Entrepreneurship status
+status_options = ['All', 'Yes', 'No']
+selected_status = st.sidebar.selectbox("Select Entrepreneurship Status", status_options)
 
-if status_option != "All":
-    df_filtered = df_filtered[df_filtered['Entrepreneurship'] == status_option]
+# Filter data based on selections
+filtered_df = df[df['Current_Job_Level'] == selected_level]
+filtered_df = filtered_df[filtered_df['Age'].between(age_range[0], age_range[1])]
 
-if df_filtered.empty:
-    st.warning("No data available for the selected filters.")
+if selected_status != 'All':
+    filtered_df = filtered_df[filtered_df['Entrepreneurship'] == selected_status]
+
+# Check if enough data exists
+if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
+    st.write("Not enough data to display density curves.")
 else:
-    st.title("Gender Distribution and Age Density Curve")
+    # Prepare figure
+    fig = go.Figure()
+    genders = filtered_df['Gender'].unique()
 
-    # --- Donut Chart ---
-    gender_counts = df_filtered['Gender'].value_counts().reset_index()
-    gender_counts.columns = ['Gender', 'Count']
-
-    fig_donut = go.Figure(data=[
-        go.Pie(
-            labels=gender_counts['Gender'],
-            values=gender_counts['Count'],
-            hole=0.5
-        )
-    ])
-    fig_donut.update_layout(title="Gender Distribution (Donut Chart)")
-
-    # --- Density Curve ---
-    fig_density = go.Figure()
-    for gender in df_filtered['Gender'].unique():
-        gender_data = df_filtered[df_filtered['Gender'] == gender]['Age']
-        if len(gender_data) > 1:
-            kde = gaussian_kde(gender_data)
-            x_vals = np.linspace(age_range[0], age_range[1], 200)
+    for gender in genders:
+        gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
+        if len(gender_ages) > 1:
+            kde = gaussian_kde(gender_ages)
+            x_vals = np.linspace(age_range[0], age_range[1], 100)
             y_vals = kde(x_vals)
-            fig_density.add_trace(go.Scatter(
+
+            fig.add_trace(go.Scatter(
                 x=x_vals,
                 y=y_vals,
                 mode='lines',
                 name=gender
             ))
 
-    fig_density.update_layout(
-        title="Age Density Curve by Gender",
+    fig.update_layout(
+        title="Density Curve of Age by Gender",
         xaxis_title="Age",
         yaxis_title="Density",
-        height=400
+        height=500,
+        margin=dict(t=40, l=40, r=40, b=40)
     )
 
-    # --- Layout 2 columns ---
-    col1, col2 = st.columns(2)
-    with col1:
-        st.plotly_chart(fig_donut, use_container_width=True)
-    with col2:
-        st.plotly_chart(fig_density, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)

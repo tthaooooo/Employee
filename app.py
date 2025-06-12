@@ -10,36 +10,27 @@ df = df[df['Gender'].notna()]  # loại bỏ dòng thiếu giới tính nếu c�
 # Sidebar filter for Job Level
 st.sidebar.title("Filters")
 job_levels = sorted(df['Current_Job_Level'].dropna().unique())
-selected_level = st.sidebar.selectbox("Select Job Level for Heatmap", job_levels)
+selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
 # Filter theo Job Level
 df_filtered = df[df['Current_Job_Level'] == selected_level]
 
-# Tính tỷ lệ khởi nghiệp theo Age và Gender
-heat_df = (
-    df_filtered.groupby(['Age', 'Gender'])['Entrepreneurship']
-    .apply(lambda x: (x == 'Yes').mean())
-    .reset_index(name='Entrepreneurship_Rate')
+# Tính số lượng theo Entrepreneurship + Gender
+pie_df = df_filtered.groupby(['Entrepreneurship', 'Gender']).size().reset_index(name='Count')
+
+# Vẽ biểu đồ tròn
+fig_pie = px.pie(
+    pie_df,
+    names='Entrepreneurship',
+    values='Count',
+    color='Entrepreneurship',
+    title=f"Entrepreneurship Distribution by Gender – {selected_level} Level",
+    hole=0.4,
+    color_discrete_map={'Yes': '#FFD700', 'No': '#004080'},
 )
 
-# Vẽ biểu đồ heatmap
-fig_heatmap = px.density_heatmap(
-    heat_df,
-    x='Age',
-    y='Gender',
-    z='Entrepreneurship_Rate',
-    color_continuous_scale='Viridis',
-    title=f'Entrepreneurship Rate by Age and Gender – {selected_level} Level',
-    labels={'Entrepreneurship_Rate': 'Rate of Entrepreneurship'}
-)
-
-fig_heatmap.update_layout(
-    margin=dict(t=50, l=40, r=40, b=40),
-    xaxis_title='Age',
-    yaxis_title='Gender',
-    coloraxis_colorbar=dict(title="Entrepreneurship Rate", tickformat=".0%")
-)
-fig_heatmap.update_traces(contours_coloring="none")
+# Phân tách thêm bằng legend Gender (optional)
+fig_pie.update_traces(textinfo='percent+label', pull=[0.05 if e == 'Yes' else 0 for e in pie_df['Entrepreneurship']])
 
 # Hiển thị biểu đồ
-st.plotly_chart(fig_heatmap, use_container_width=True)
+st.plotly_chart(fig_pie, use_container_width=True)

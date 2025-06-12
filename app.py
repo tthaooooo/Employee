@@ -5,46 +5,39 @@ import plotly.express as px
 # Load data
 df = pd.read_csv('education_career_success.csv')
 
-# Kiểm tra cột bắt buộc
-required_columns = ['Current_Job_Level', 'Gender', 'Entrepreneurship']
-if not all(col in df.columns for col in required_columns):
-    st.error("Dataset missing required columns!")
-    st.stop()
-
-# Drop missing data ở các cột cần dùng
-df = df.dropna(subset=required_columns)
-
-# Chỉ lấy các giá trị cần cho biểu đồ
+# Drop rows with missing required columns
+required_cols = ['Current_Job_Level', 'Gender', 'Entrepreneurship']
+df = df.dropna(subset=required_cols)
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
 
-# Sidebar: chọn Job Level
+# Sidebar filter: Job Level
 st.sidebar.title("Filters")
 job_levels = sorted(df['Current_Job_Level'].unique())
 selected_level = st.sidebar.selectbox("Select Job Level", job_levels)
 
-# Lọc theo Job Level
+# Filter by Job Level
 df_filtered = df[df['Current_Job_Level'] == selected_level]
 
-# Kiểm tra nếu không có dữ liệu
+# Check if data exists
 if df_filtered.empty:
     st.warning(f"No data available for job level: {selected_level}")
     st.stop()
 
-# Gom nhóm theo Entrepreneurship + Gender
-pie_data = df_filtered.groupby(['Entrepreneurship', 'Gender']).size().reset_index(name='Count')
-
-# Vẽ pie chart
-fig = px.pie(
-    pie_data,
-    names='Entrepreneurship',
-    values='Count',
-    color='Entrepreneurship',
-    title=f"Entrepreneurship by Gender – {selected_level} Level",
-    hole=0.4,
-    color_discrete_map={'Yes': '#FFD700', 'No': '#004080'}
-)
-
-fig.update_traces(textinfo='percent+label')
-
-# Hiển thị biểu đồ
-st.plotly_chart(fig, use_container_width=True)
+# Group data: Gender distribution within each Entrepreneurship group
+for status in ['Yes', 'No']:
+    subset = df_filtered[df_filtered['Entrepreneurship'] == status]
+    if not subset.empty:
+        gender_counts = subset['Gender'].value_counts().reset_index()
+        gender_counts.columns = ['Gender', 'Count']
+        
+        fig = px.pie(
+            gender_counts,
+            names='Gender',
+            values='Count',
+            title=f"Gender Distribution – Entrepreneurship: {status} – Level: {selected_level}",
+            hole=0.4
+        )
+        fig.update_traces(textinfo='percent+label')
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info(f"No data for Entrepreneurship = {status} at level {selected_level}")

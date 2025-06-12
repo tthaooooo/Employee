@@ -41,48 +41,49 @@ if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
 else:
     col1, col2 = st.columns([1, 1])
 
-    # Histogram + Density Curve
+    # Histogram + Density Curve in same chart
     with col1:
-        fig_combined = go.Figure()
+        fig = go.Figure()
         genders = filtered_df['Gender'].unique()
         colors = {'Male': 'blue', 'Female': 'red'}
 
         for gender in genders:
-            gender_data = filtered_df[filtered_df['Gender'] == gender]
-            gender_ages = gender_data['Age']
+            gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
             
             # Histogram
-            fig_combined.add_trace(go.Histogram(
+            fig.add_trace(go.Histogram(
                 x=gender_ages,
-                name=f"{gender} (hist)",
-                opacity=0.5,
+                name=f"{gender} (histogram)",
+                opacity=0.4,
                 marker_color=colors.get(gender, None),
-                nbinsx=20
+                nbinsx=20,
+                histnorm='probability density',
             ))
-
-            # Density curve
+            
+            # Density Curve
             if len(gender_ages) > 1:
                 kde = gaussian_kde(gender_ages)
                 x_vals = np.linspace(age_range[0], age_range[1], 200)
                 y_vals = kde(x_vals)
-                fig_combined.add_trace(go.Scatter(
+
+                fig.add_trace(go.Scatter(
                     x=x_vals,
                     y=y_vals,
                     mode='lines',
-                    name=f"{gender} (kde)",
+                    name=f"{gender} (density)",
                     line=dict(color=colors.get(gender, None), width=2)
                 ))
 
-        fig_combined.update_layout(
-            title="Age Distribution by Gender (Histogram + Curve)",
+        fig.update_layout(
+            title="Age Distribution by Gender (Histogram + Density)",
             xaxis_title="Age",
-            yaxis_title="Frequency / Density",
+            yaxis_title="Density",
             barmode='overlay',
             height=500,
             margin=dict(t=40, l=40, r=40, b=40)
         )
-        fig_combined.update_traces(opacity=0.6)
-        st.plotly_chart(fig_combined, use_container_width=True)
+
+        st.plotly_chart(fig, use_container_width=True)
 
     # Donut Chart
     with col2:

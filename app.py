@@ -3,21 +3,21 @@ import pandas as pd
 import plotly.express as px
 
 # Load and preprocess data
-df = pd.read_csv('education_career_success.csv')
-df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
-
-# Sidebar filters
 st.set_page_config(page_title="Entrepreneurship by Age & Gender", layout="wide")
 st.title("📊 Entrepreneurship Trends by Age and Gender")
 st.markdown("Explore how entrepreneurship varies across age groups and job levels.")
 
+df = pd.read_csv('education_career_success.csv')
+df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
+
+# Sidebar filters
 st.sidebar.title("Filters")
 
 # Gender filter
 genders = sorted(df['Gender'].dropna().unique())
 selected_genders = st.sidebar.multiselect("Select Gender", genders, default=genders)
 
-# Filter data based on selected genders first
+# Filter data based on selected genders
 df = df[df['Gender'].isin(selected_genders)]
 
 # Group and calculate percentage
@@ -46,21 +46,18 @@ filtered = df_grouped[
     (df_grouped['Age'].between(age_range[0], age_range[1]))
 ]
 
-color_map = {'Yes': '#FFD700', 'No': '#004080'}
-
 if filtered.empty:
     st.write(f"### No data available for {selected_level} level.")
 else:
     ages = sorted(filtered['Age'].unique())
-    
-    # Bar chart: Percentage
+
+    # Bar chart: Percentage (default color, no annotations)
     fig_bar = px.bar(
         filtered,
         x='Age',
         y='Percentage',
         color='Entrepreneurship',
         barmode='stack',
-        color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Percentage': 'Percentage'},
         height=400,
@@ -74,14 +71,13 @@ else:
     )
     fig_bar.update_yaxes(tickformat=".0%", title="Percentage")
 
-    # Area chart: Count
+    # Area chart: Count (default color)
     fig_area = px.area(
         filtered,
         x='Age',
         y='Count',
         color='Entrepreneurship',
         markers=True,
-        color_discrete_map=color_map,
         category_orders={'Entrepreneurship': ['No', 'Yes'], 'Age': ages},
         labels={'Age': 'Age', 'Count': 'Count'},
         height=400,

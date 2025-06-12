@@ -36,26 +36,10 @@ if filtered_df.empty or filtered_df['Gender'].nunique() < 2:
 else:
     col1, col2 = st.columns(2)
 
-    # Area Chart (Density Curve)
+    # Area Chart (was density curve)
     with col1:
         fig_density = go.Figure()
         genders = filtered_df['Gender'].unique()
-
-        # Màu sắc mới: vàng nhạt, xanh đậm, đỏ – đều trong suốt
-        color_map = {
-            'Male': {
-                'fill': 'rgba(255, 223, 70, 0.3)',  # vàng nhạt trong suốt
-                'line': 'rgba(255, 193, 7, 1)'       # đường vàng rõ hơn
-            },
-            'Female': {
-                'fill': 'rgba(0, 123, 255, 0.3)',    # xanh đậm trong suốt
-                'line': 'rgba(0, 123, 255, 1)'
-            },
-            'Other': {
-                'fill': 'rgba(220, 53, 69, 0.3)',    # đỏ trong suốt
-                'line': 'rgba(220, 53, 69, 1)'
-            }
-        }
 
         for gender in genders:
             gender_ages = filtered_df[filtered_df['Gender'] == gender]['Age']
@@ -64,19 +48,12 @@ else:
                 x_vals = np.linspace(age_range[0], age_range[1], 100)
                 y_vals = kde(x_vals)
 
-                color = color_map.get(gender, {
-                    'fill': 'rgba(200,200,200,0.3)',
-                    'line': 'rgba(100,100,100,1)'
-                })
-
                 fig_density.add_trace(go.Scatter(
                     x=x_vals,
                     y=y_vals,
                     mode='lines',
                     name=gender,
-                    fill='tozeroy',
-                    fillcolor=color['fill'],
-                    line=dict(color=color['line'], width=2)
+                    fill='tozeroy'  # Tạo area chart
                 ))
 
         fig_density.update_layout(
@@ -92,17 +69,10 @@ else:
     with col2:
         gender_counts = filtered_df['Gender'].value_counts().reset_index()
         gender_counts.columns = ['Gender', 'Count']
-
-        # Gắn màu giống như area chart
-        colors = []
-        for g in gender_counts['Gender']:
-            colors.append(color_map.get(g, {'fill': 'rgba(200,200,200,0.5)'})['fill'])
-
         fig_donut = go.Figure(data=[go.Pie(
             labels=gender_counts['Gender'],
             values=gender_counts['Count'],
-            hole=0.5,
-            marker=dict(colors=colors)
+            hole=0.5  # Donut style
         )])
 
         fig_donut.update_layout(

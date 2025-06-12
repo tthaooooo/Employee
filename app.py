@@ -5,6 +5,18 @@ import plotly.express as px
 # Load and preprocess data
 df = pd.read_csv('education_career_success.csv')
 df = df[df['Entrepreneurship'].isin(['Yes', 'No'])]
+
+# Sidebar filters
+st.sidebar.title("Filters")
+
+# Gender filter
+genders = sorted(df['Gender'].dropna().unique())
+selected_genders = st.sidebar.multiselect("Select Gender", genders, default=genders)
+
+# Filter data based on selected genders first
+df = df[df['Gender'].isin(selected_genders)]
+
+# Continue processing
 df_grouped = (
     df.groupby(['Current_Job_Level', 'Age', 'Entrepreneurship'])
       .size()
@@ -12,18 +24,18 @@ df_grouped = (
 )
 df_grouped['Percentage'] = df_grouped.groupby(['Current_Job_Level', 'Age'])['Count'].transform(lambda x: x / x.sum())
 
-# Sidebar filters
-st.sidebar.title("Filters")
-
+# Job level filter
 job_levels = sorted(df_grouped['Current_Job_Level'].unique())
 selected_level = st.sidebar.selectbox("Select Job Level (Bar/Area Charts)", job_levels)
 
+# Age filter
 min_age, max_age = int(df_grouped['Age'].min()), int(df_grouped['Age'].max())
 age_range = st.sidebar.slider("Select Age Range", min_value=min_age, max_value=max_age, value=(min_age, max_age))
 
+# Entrepreneurship filter
 selected_statuses = st.sidebar.multiselect("Select Entrepreneurship Status", ['Yes', 'No'], default=['Yes', 'No'])
 
-# Filter data according to selections
+# Final filtered dataset
 filtered = df_grouped[
     (df_grouped['Current_Job_Level'] == selected_level) &
     (df_grouped['Entrepreneurship'].isin(selected_statuses)) &

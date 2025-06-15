@@ -237,47 +237,54 @@ with graph_tab[0]:
                 legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5)
             )
             st.plotly_chart(fig_density, use_container_width=True)
+
         with col2:
             group_col = 'Gender' if chart_option == 'Gender Distribution' else 'Field_of_Study'
             pie_data = df_demo[group_col].value_counts().reset_index()
             pie_data.columns = [group_col, 'Count']
 
-    labels = pie_data[group_col]
-    values = pie_data['Count']
+            labels = pie_data[group_col]
+            values = pie_data['Count']
 
-    fig_donut = go.Figure(data=[
-        go.Pie(
-            labels=labels,
-            values=values,
-            hole=0.5,
-            textinfo='percent+label',
-            insidetextorientation='radial',
-            marker=dict(line=dict(color='#fff', width=1))
-        )
-    ])
+            # Create donut chart with matching background
+            fig_donut = go.Figure(data=[
+                go.Pie(
+                    labels=labels,
+                    values=values,
+                    hole=0.5,  # This creates the donut hole
+                    textinfo='percent+label',
+                    insidetextorientation='radial',
+                    marker=dict(
+                        line=dict(color='#ffffff', width=2),
+                        colors=px.colors.qualitative.Set3  # You can customize colors here
+                    ),
+                    hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>"
+                )
+            ])
 
-    fig_donut.update_layout(
-        title={
-            'text': f"{group_col.replace('_', ' ')} Distribution (Donut Chart)",
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': dict(size=18, color='#333')
-        },
-        legend=dict(
-            orientation='h',
-            yanchor='bottom',
-            y=-0.3,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=12)
-        ),
-        height=500,
-        margin=dict(t=40, l=20, r=20, b=80),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-    )
+            fig_donut.update_layout(
+                title={
+                    'text': f"{group_col.replace('_', ' ')} Distribution (Donut Chart)",
+                    'x': 0.5,
+                    'xanchor': 'center',
+                    'font': dict(size=18, color='#333')
+                },
+                legend=dict(
+                    orientation='h',
+                    yanchor='bottom',
+                    y=-0.3,
+                    xanchor='center',  
+                    x=0.5,
+                    font=dict(size=12)
+                ),
+                height=500,
+                margin=dict(t=40, l=20, r=20, b=80),
+                paper_bgcolor='rgba(0,0,0,0)',  # Transparent background to match page
+                plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot area
+                font=dict(color='#333')
+            )
 
-    st.plotly_chart(fig_donut, use_container_width=True)
+            st.plotly_chart(fig_donut, use_container_width=True)
 
         # === Notes Section ===
         note_style = """
@@ -314,8 +321,8 @@ with graph_tab[0]:
             with note_col2:
                 st.markdown(
                     note_style.format(
-                        title=f"{chart_option} – Pie Chart Insight ({selected_level})",
-                        text=gender_pie_notes.get(selected_level, "No pie chart notes available.") if chart_option == 'Gender Distribution' else ""
+                        title=f"{chart_option} – Donut Chart Insight ({selected_level})",
+                        text=gender_pie_notes.get(selected_level, "No donut chart notes available.") if chart_option == 'Gender Distribution' else ""
                     ),
                     unsafe_allow_html=True
                 )
@@ -374,8 +381,6 @@ with graph_tab[1]:
     st.markdown("""
         <h1 style='font-family: "Inter", sans-serif; color: #cf5a2e; font-size: 36px;'>Job Offers</h1>
     """, unsafe_allow_html=True)
-
-
 
     df_filtered = gender_filtered[
         (gender_filtered['Current_Job_Level'] == selected_level) &

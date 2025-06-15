@@ -12,19 +12,129 @@ apply_global_styles()
 
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
-        color: #52504d;
+        color: #4a5568;
         font-size: 15px;
+        background-color: #f8fafc !important;
+    }
+
+    .main > div {
+        background-color: #f8fafc;
+        padding-top: 1rem;
     }
 
     .main-title {
-        font-size: 32px;
+        font-size: 36px;
         font-weight: 700;
         margin-bottom: 20px;
-        color: #222;
+        color: #2d3748;
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 2rem;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 3rem;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+
+    .get-started-btn {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 2rem;
+        box-shadow: 0 10px 20px rgba(238, 90, 36, 0.3);
+    }
+
+    .get-started-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(238, 90, 36, 0.4);
+    }
+
+    .next-page-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 2rem auto;
+        display: block;
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .next-page-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+    }
+
+    .stTabs > div > div > div > div {
+        background-color: #ffffff;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+
+    .code-container {
+        background: linear-gradient(135deg, #1a202c, #2d3748);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .code-title {
+        color: #63b3ed;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .team-section {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        margin-top: 3rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+
+    .team-member {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 1rem;
+        box-shadow: 0 8px 20px rgba(240, 147, 251, 0.3);
+        transition: transform 0.3s ease;
+    }
+
+    .team-member:hover {
+        transform: translateY(-5px);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -41,9 +151,51 @@ def load_data():
 
 df = load_data()
 
+# Create anchor points for navigation
+def scroll_to_section(section_id):
+    st.markdown(f'<div id="{section_id}"></div>', unsafe_allow_html=True)
+
+# Hero Section
+st.markdown("""
+    <div class="hero-section">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; font-weight: 700;">
+            🚀 Entrepreneurship Insights Dashboard
+        </h1>
+        <p style="font-size: 1.3rem; opacity: 0.9; margin-bottom: 2rem;">
+            Khám phá dữ liệu và xu hướng kinh doanh với các biểu đồ tương tác mạnh mẽ
+        </p>
+        <a href="#team-section" class="get-started-btn">
+            GET STARTED 🎯
+        </a>
+    </div>
+""", unsafe_allow_html=True)
+
+# Team Section
+scroll_to_section("team-section")
+st.markdown("""
+    <div class="team-section">
+        <h2 style="color: #2d3748; font-size: 2.5rem; margin-bottom: 2rem; font-weight: 700;">
+            👥 Đội Ngũ Phát Triển
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 2rem;">
+            <div class="team-member">
+                <h3 style="margin-bottom: 0.5rem;">🎨 Frontend Developer</h3>
+                <p>Thiết kế giao diện và trải nghiệm người dùng</p>
+            </div>
+            <div class="team-member">
+                <h3 style="margin-bottom: 0.5rem;">📊 Data Analyst</h3>
+                <p>Phân tích và xử lý dữ liệu kinh doanh</p>
+            </div>
+            <div class="team-member">
+                <h3 style="margin-bottom: 0.5rem;">🛠️ Backend Engineer</h3>
+                <p>Xây dựng hệ thống và API mạnh mẽ</p>
+            </div>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Sidebar Filters
-st.sidebar.title("Filters")
+st.sidebar.title("🎛️ Filters")
 
 gender_density_notes = {
     "Entry": """
@@ -82,6 +234,7 @@ gender_pie_notes = {
         - Female and other gender groups are significantly underrepresented.<br>
     """
 }
+
 field_of_study_notes = {
     "Entry": """
         - Entry-level individuals are mostly between ages 24–26, with peaks in Computer Science and Engineering.<br>
@@ -101,7 +254,6 @@ field_of_study_notes = {
     """
 }
 
-
 # Gender Filter - Multiselect
 gender_options = sorted(df['Gender'].dropna().unique())
 selected_genders = st.sidebar.multiselect("Select Gender(s)", gender_options, default=gender_options)
@@ -109,7 +261,7 @@ selected_genders = st.sidebar.multiselect("Select Gender(s)", gender_options, de
 # Handle Gender Filter
 if not selected_genders:
     st.sidebar.warning("⚠️ No gender selected. Using full data. Please choose at least one option.")
-    gender_filtered = df  # fallback to full data to avoid crash
+    gender_filtered = df
 elif 'All' in selected_genders:
     gender_filtered = df
 else:
@@ -143,15 +295,19 @@ if not (show_yes or show_no):
     st.sidebar.warning("⚠️ No status selected. Using full data. Please choose at least one option.")
     selected_statuses = ['Yes', 'No']
 
-color_map = {'Yes': '#FFD700', 'No': '#004080'}
+# Soft color palette matching the light background
+color_map = {'Yes': '#667eea', 'No': '#764ba2'}
+soft_colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#63b3ed', '#68d391', '#fbb6ce', '#f6e05e']
 
 # Main Tabs
-graph_tab = st.tabs(["📈 Demographics", "📊 Job Offers"])
+tabs = st.tabs(["📈 Demographics", "📊 Job Offers", "💻 CODE"])
 
 # === TAB 1 (Demographics) ===
-with graph_tab[0]:
+with tabs[0]:
     st.markdown("""
-        <h1 style='font-family: "Inter", sans-serif; color: #cf5a2e; font-size: 40px;'>📊 Demographics</h1>
+        <h1 style='font-family: "Inter", sans-serif; color: #667eea; font-size: 40px; text-align: center; margin-bottom: 2rem;'>
+            📊 Demographics Analysis
+        </h1>
     """, unsafe_allow_html=True)
     
     chart_option = st.selectbox("Select Variable for Visualization", ['Gender Distribution', 'Field of Study'])
@@ -167,38 +323,37 @@ with graph_tab[0]:
     else:
         if chart_option == 'Gender Distribution':
             with st.container():
-                st.markdown("""<div style="border: 2px solid #cf5a2e; border-radius: 12px; padding: 20px; margin-top: 10px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                    <div style="display: flex; justify-content: space-around; text-align: center; line-height: 1.3;">
+                st.markdown("""<div style="border: 2px solid #667eea; border-radius: 15px; padding: 25px; margin: 20px 0; background: linear-gradient(135deg, #f8fafc, #edf2f7); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);">
+                    <div style="display: flex; justify-content: space-around; text-align: center; line-height: 1.4;">
                         <div>
-                            <div style="font-size: 14px; color: #555;">Total Records</div>
-                            <div style="font-size: 28px;">{}</div>
+                            <div style="font-size: 14px; color: #667eea; font-weight: 600;">Total Records</div>
+                            <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{}</div>
                         </div>
                         <div>
-                            <div style="font-size: 14px; color: #555;">Median Age</div>
-                            <div style="font-size: 28px;">{:.1f}</div>
+                            <div style="font-size: 14px; color: #667eea; font-weight: 600;">Median Age</div>
+                            <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{:.1f}</div>
                         </div>
                         <div>
-                            <div style="font-size: 14px; color: #555;">% Female</div>
-                            <div style="font-size: 28px;">{:.1f}%</div>
+                            <div style="font-size: 14px; color: #667eea; font-weight: 600;">% Female</div>
+                            <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{:.1f}%</div>
                         </div>
                     </div></div>
                 """.format(len(df_demo), df_demo['Age'].median(),
                            (df_demo['Gender'] == 'Female').mean() * 100),
                 unsafe_allow_html=True)
-
         else:
             top_fields = df_demo['Field_of_Study'].value_counts().head(3).index.tolist()
             display_fields = ", ".join(top_fields) if top_fields else "N/A"
             with st.container():
-                st.markdown("""<div style="border: 2px solid #cf5a2e; border-radius: 12px; padding: 20px; margin-top: 10px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                    <div style="display: flex; justify-content: space-around; text-align: center; line-height: 1.3;">
+                st.markdown("""<div style="border: 2px solid #667eea; border-radius: 15px; padding: 25px; margin: 20px 0; background: linear-gradient(135deg, #f8fafc, #edf2f7); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);">
+                    <div style="display: flex; justify-content: space-around; text-align: center; line-height: 1.4;">
                         <div>
-                            <div style="font-size: 14px; color: #555;">Total Records</div>
-                            <div style="font-size: 28px;">{}</div>
+                            <div style="font-size: 14px; color: #667eea; font-weight: 600;">Total Records</div>
+                            <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{}</div>
                         </div>
                         <div>
-                            <div style="font-size: 14px; color: #555;">Top 3 Fields</div>
-                            <div style="font-size: 20px;">{}</div>
+                            <div style="font-size: 14px; color: #667eea; font-weight: 600;">Top 3 Fields</div>
+                            <div style="font-size: 22px; color: #2d3748; font-weight: 600;">{}</div>
                         </div>
                     </div></div>
                 """.format(len(df_demo), display_fields),
@@ -212,7 +367,7 @@ with graph_tab[0]:
             title = f"Age Distribution by {group_col.replace('_', ' ')}"
             categories = df_demo[group_col].dropna().unique()
 
-            for cat in categories:
+            for i, cat in enumerate(categories):
                 age_data = df_demo[df_demo[group_col] == cat]['Age']
                 if len(age_data) > 1:
                     kde = gaussian_kde(age_data)
@@ -223,18 +378,21 @@ with graph_tab[0]:
                         y=y_vals,
                         mode='lines',
                         name=str(cat),
-                        fill='tozeroy'
+                        fill='tozeroy',
+                        line=dict(color=soft_colors[i % len(soft_colors)], width=3),
+                        fillcolor=f"rgba{(*[int(soft_colors[i % len(soft_colors)][j:j+2], 16) for j in (1, 3, 5)], 0.3)}"
                     ))
 
             fig_density.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                title=title,
+                paper_bgcolor='rgba(248, 250, 252, 0.8)',
+                plot_bgcolor='rgba(255, 255, 255, 0.9)',
+                title=dict(text=title, font=dict(size=18, color='#2d3748', family='Inter')),
                 xaxis_title="Age",
                 yaxis_title="Density",
                 height=500,
-                margin=dict(t=40, l=40, r=40, b=80),
-                legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5)
+                margin=dict(t=50, l=50, r=50, b=80),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.35, xanchor="center", x=0.5),
+                font=dict(family='Inter', color='#4a5568')
             )
             st.plotly_chart(fig_density, use_container_width=True)
 
@@ -246,28 +404,28 @@ with graph_tab[0]:
             labels = pie_data[group_col]
             values = pie_data['Count']
 
-            # Create donut chart with matching background
             fig_donut = go.Figure(data=[
                 go.Pie(
                     labels=labels,
                     values=values,
-                    hole=0.5,  # This creates the donut hole
+                    hole=0.5,
                     textinfo='percent+label',
                     insidetextorientation='radial',
                     marker=dict(
-                        line=dict(color='#ffffff', width=2),
-                        colors=px.colors.qualitative.Set3  # You can customize colors here
+                        line=dict(color='#ffffff', width=3),
+                        colors=soft_colors[:len(labels)]
                     ),
-                    hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>"
+                    hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>",
+                    textfont=dict(size=14, family='Inter')
                 )
             ])
 
             fig_donut.update_layout(
                 title={
-                    'text': f"{group_col.replace('_', ' ')} Distribution (Donut Chart)",
+                    'text': f"{group_col.replace('_', ' ')} Distribution",
                     'x': 0.5,
                     'xanchor': 'center',
-                    'font': dict(size=18, color='#333')
+                    'font': dict(size=18, color='#2d3748', family='Inter')
                 },
                 legend=dict(
                     orientation='h',
@@ -275,32 +433,32 @@ with graph_tab[0]:
                     y=-0.3,
                     xanchor='center',  
                     x=0.5,
-                    font=dict(size=12)
+                    font=dict(size=12, family='Inter')
                 ),
                 height=500,
-                margin=dict(t=40, l=20, r=20, b=80),
-                paper_bgcolor='rgba(0,0,0,0)',  # Transparent background to match page
-                plot_bgcolor='rgba(0,0,0,0)',   # Transparent plot area
-                font=dict(color='#333')
+                margin=dict(t=50, l=20, r=20, b=80),
+                paper_bgcolor='rgba(248, 250, 252, 0.8)',
+                plot_bgcolor='rgba(255, 255, 255, 0.9)',
+                font=dict(color='#4a5568', family='Inter')
             )
 
             st.plotly_chart(fig_donut, use_container_width=True)
 
-        # === Notes Section ===
+        # Notes Section with improved styling
         note_style = """
         <div style="
-            background-color: #fff4ec;
-            border-left: 6px solid #cf5a2e;
-            padding: 18px 22px;
-            margin-top: 25px;
-            border-radius: 12px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+            background: linear-gradient(135deg, #f8fafc, #edf2f7);
+            border-left: 6px solid #667eea;
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
             font-family: 'Inter', sans-serif;
         ">
-            <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #cf5a2e;">
+            <div style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #667eea;">
                 📌 {title}
             </div>
-            <div style="font-size: 14px; color: #444;">
+            <div style="font-size: 15px; color: #4a5568; line-height: 1.6;">
                 {text}
             </div>
         </div>
@@ -308,35 +466,37 @@ with graph_tab[0]:
 
         if chart_option == 'Gender Distribution':
             note_col1, note_col2 = st.columns(2)
-
             with note_col1:
                 st.markdown(
                     note_style.format(
-                        title=f"{chart_option} – Density Chart Insight ({selected_level})",
-                        text=gender_density_notes.get(selected_level, "No density notes available.") if chart_option == 'Gender Distribution' else ""
+                        title=f"Density Chart Insights ({selected_level})",
+                        text=gender_density_notes.get(selected_level, "No density notes available.")
                     ),
                     unsafe_allow_html=True
                 )
-
             with note_col2:
                 st.markdown(
                     note_style.format(
-                        title=f"{chart_option} – Donut Chart Insight ({selected_level})",
-                        text=gender_pie_notes.get(selected_level, "No donut chart notes available.") if chart_option == 'Gender Distribution' else ""
+                        title=f"Donut Chart Insights ({selected_level})",
+                        text=gender_pie_notes.get(selected_level, "No donut chart notes available.")
                     ),
                     unsafe_allow_html=True
                 )
-
         elif chart_option == 'Field of Study':
             st.markdown(
                 note_style.format(
-                    title=f"Field of Study Insight – {selected_level}",
+                    title=f"Field of Study Insights – {selected_level}",
                     text=field_of_study_notes.get(selected_level, "No notes for this level.")
                 ),
                 unsafe_allow_html=True
             )
 
-
+    # Next page button
+    st.markdown("""
+        <button class="next-page-btn" onclick="document.querySelector('[data-testid=\"stTabs\"] button:nth-child(2)').click()">
+            Next: Job Offers Analysis →
+        </button>
+    """, unsafe_allow_html=True)
 
 # === TAB 2 (Job Offers) ===
 job_level_notes = {
@@ -377,9 +537,11 @@ job_offers_notes = {
     """
 }
 
-with graph_tab[1]:
+with tabs[1]:
     st.markdown("""
-        <h1 style='font-family: "Inter", sans-serif; color: #cf5a2e; font-size: 36px;'>Job Offers</h1>
+        <h1 style='font-family: "Inter", sans-serif; color: #764ba2; font-size: 40px; text-align: center; margin-bottom: 2rem;'>
+            📊 Job Offers Analysis
+        </h1>
     """, unsafe_allow_html=True)
 
     df_filtered = gender_filtered[
@@ -392,19 +554,19 @@ with graph_tab[1]:
         st.warning("⚠️ Not enough data to display charts. Please adjust the filters.")
     else:
         with st.container():
-            st.markdown("""<div style="border: 2px solid #cf5a2e; border-radius: 12px; padding: 20px; margin-top: 10px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                <div style="display: flex; justify-content: space-around; text-align: center; line-height: 1.3;">
+            st.markdown("""<div style="border: 2px solid #764ba2; border-radius: 15px; padding: 25px; margin: 20px 0; background: linear-gradient(135deg, #f8fafc, #edf2f7); box-shadow: 0 8px 25px rgba(118, 75, 162, 0.1);">
+                <div style="display: flex; justify-content: space-around; text-align: center; line-height: 1.4;">
                     <div>
-                        <div style="font-size: 14px; color: #555;">Total Records</div>
-                        <div style="font-size: 28px;">{}</div>
+                        <div style="font-size: 14px; color: #764ba2; font-weight: 600;">Total Records</div>
+                        <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{}</div>
                     </div>
                     <div>
-                        <div style="font-size: 14px; color: #555;">Median Age</div>
-                        <div style="font-size: 28px;">{:.1f}</div>
+                        <div style="font-size: 14px; color: #764ba2; font-weight: 600;">Median Age</div>
+                        <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{:.1f}</div>
                     </div>
                     <div>
-                        <div style="font-size: 14px; color: #555;">Entrepreneurs (%)</div>
-                        <div style="font-size: 28px;">{:.1f}%</div>
+                        <div style="font-size: 14px; color: #764ba2; font-weight: 600;">Entrepreneurs (%)</div>
+                        <div style="font-size: 32px; color: #2d3748; font-weight: 700;">{:.1f}%</div>
                     </div>
                 </div></div>
             """.format(len(df_filtered), df_filtered['Age'].median(),
@@ -437,7 +599,6 @@ with graph_tab[1]:
             category_orders={'Entrepreneurship': ['No', 'Yes']},
             labels={'Age': 'Age', 'Percentage': 'Percentage'},
             height=450,
-            width=1250,
             title=f"Entrepreneurship Distribution by Age – {selected_level} Level"
         )
 
@@ -448,15 +609,17 @@ with graph_tab[1]:
         )
 
         fig_bar.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=40, l=40, r=40, b=40),
+            paper_bgcolor='rgba(248, 250, 252, 0.8)',
+            plot_bgcolor='rgba(255, 255, 255, 0.9)',
+            margin=dict(t=50, l=50, r=50, b=50),
             legend_title_text='Entrepreneurship',
             xaxis_tickangle=0,
             bargap=0.1,
             xaxis=dict(tickvals=even_ages),
             yaxis=dict(title="Percentage", range=[0, 1], tickformat=".0%"),
-            legend=dict(orientation='h', yanchor='bottom', y=-0.3, xanchor='center', x=0.5)
+            legend=dict(orientation='h', yanchor='bottom', y=-0.3, xanchor='center', x=0.5),
+            font=dict(family='Inter', color='#4a5568'),
+            title=dict(font=dict(size=18, color='#2d3748', family='Inter'))
         )
 
         df_avg_offers = (
@@ -474,73 +637,6 @@ with graph_tab[1]:
                 y=data_status["Job_Offers"],
                 mode="lines+markers",
                 name=status,
-                line=dict(color=color_map[status], width=2),
-                marker=dict(size=6),
+                line=dict(color=color_map[status], width=4),
+                marker=dict(size=8, line=dict(width=2, color='white')),
                 hovertemplate="%{y:.2f}"
-            ))
-
-        fig_line.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            title=f"Average Job Offers by Age – {selected_level} Level",
-            margin=dict(t=40, l=40, r=40, b=40),
-            legend_title_text='Entrepreneurship',
-            xaxis_tickangle=0,
-            hovermode="x unified",
-            width=1250,
-            xaxis=dict(
-                showspikes=True,
-                spikemode='across',
-                spikesnap='cursor',
-                spikethickness=1.2,
-                spikedash='dot',
-                tickvals=even_ages
-            ),
-            yaxis=dict(
-                title="Average Job Offers",
-                showspikes=True,
-                spikemode='across',
-                spikesnap='cursor',
-                spikethickness=1.2,
-                spikedash='dot',
-                gridcolor='#b4adae'
-            ),
-            legend=dict(orientation='h', yanchor='bottom', y=-0.3, xanchor='center', x=0.5)
-        )
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.plotly_chart(fig_bar, use_container_width=True)
-        with col2:
-            st.plotly_chart(fig_line, use_container_width=True)
-            
-        # Add dual note boxes below the two charts
-        note_bar = job_level_notes.get(selected_level, "No specific notes available for this level.")
-        note_line = job_offers_notes.get(selected_level, "No specific notes available for this level.")
-        
-        note_style = """
-        <div style="
-            background-color: #fff4ec;
-            border-left: 6px solid #cf5a2e;
-            padding: 18px 22px;
-            margin-top: 25px;
-            border-radius: 12px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
-            font-family: 'Segoe UI', sans-serif;
-        ">
-            <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #cf5a2e;">
-                📌 {title}
-            </div>
-            <div style="font-size: 14px; color: #444;">
-                {text}
-            </div>
-        </div>
-        """
-        
-        note_col1, note_col2 = st.columns(2)
-        
-        with note_col1:
-            st.markdown(note_style.format(title=f"Entrepreneurship Distribution Key Note – {selected_level}", text=note_bar), unsafe_allow_html=True)
-        
-        with note_col2:
-            st.markdown(note_style.format(title=f"Average Job Offers Key Note – {selected_level}", text=note_line), unsafe_allow_html=True)
